@@ -1388,7 +1388,10 @@ def manage(test_nbr,
 	### Print df original:
 	print_style("Df original :", color = informative_color)
 	print_style("_____________", color = informative_color)
-	print(df[['date_from', "date_to", "close"]])
+	try:
+		print(df[['date_from', "date_to", "close"]])
+	except:
+		print(df)
 	print("\ndf original columns :", df.columns.tolist(),"\n")
 	
 	### FRAGMENT LENGTH OF DF ACCORDING TO CONDITIONS AND RESET ITS INDEX:
