@@ -923,7 +923,7 @@ class FirebaseStorage:
 
 
 firebase_storage = FirebaseStorage(
-				firebase_config = main_variables.firebase_config)
+				firebase_config = firebase_config)
 
 def direct_upload_file(local_file_path_name, cloud_file_path_name):
 	try:
