@@ -7,15 +7,7 @@
 results_cloud_path = "drinbd-n-repeat-seas/results/"
 landmarks_cloud_path = "drinbd-n-repeat-seas/landmarks/"
 # modules_cloud_path = "drinbd-n-repeat-seas/modules/"
-modules_filepaths = [
-					"utils.py",
-					"manage.py",
-					"dl_model.py",
-					"datascience.py",
-					"main_variables.py",
-					"manage_firebase.py"
-					"evaluate_results.py",
-					]
+
 gdrive_folder_path = '/content/drive/MyDrive/'
 
 common_path = "https://github.com/GilbertAK/eurusd_data/blob/main/"
@@ -476,7 +468,7 @@ import time
 # 	import main_variables
 # 	import utils
 
-exec_environment = utils.check_environment()
+exec_environment = check_environment()
 
 if exec_environment == 'Colab':
 	from tensorflow import keras
@@ -561,7 +553,7 @@ def fit_n_save_model(X_train, y_train,
 	print(f"Checking presence of: {history_filepath.split('/')[-1]}")
 	history_filepath_exists = False
 	for _ in range(5):
-		if utils.check_file_exists(filepath = history_filepath):
+		if check_file_exists(filepath = history_filepath):
 			history_filepath_exists = True
 			break
 		else:
@@ -569,14 +561,14 @@ def fit_n_save_model(X_train, y_train,
 
 	if history_filepath_exists:
 		loss_n_val_loss = load_pickle(filepath = history_filepath)
-		utils.print_style(text = f"\nOkay {history_filepath.split('/')[-1]} found !!!\n", 
+		print_style(text = f"\nOkay {history_filepath.split('/')[-1]} found !!!\n", 
 						color = 'green', 
 						bold = True,
 						underline = False)
 		# time.sleep(3)
 	else:
 		for _ in range(10):
-			utils.print_style(text = "Saving history will start from zero !!!", 
+			print_style(text = "Saving history will start from zero !!!", 
 							color = "red", 
 							bold = True, 
 							underline = False)
@@ -590,7 +582,7 @@ def fit_n_save_model(X_train, y_train,
 	print(f"Checking presence of: {model_filepath.split('/')[-1]}")
 	model_filepath_exists = False
 	for _ in range(5):
-		if utils.check_file_exists(filepath = model_filepath):
+		if check_file_exists(filepath = model_filepath):
 			model_filepath_exists = True
 			break
 		else:
@@ -599,7 +591,7 @@ def fit_n_save_model(X_train, y_train,
 	print(f"Checking presence of: {save_prev_epochs_filepath.split('/')[-1]}")
 	save_prev_epochs_filepath_exists = False
 	for _ in range(5):
-		if utils.check_file_exists(filepath = save_prev_epochs_filepath):
+		if check_file_exists(filepath = save_prev_epochs_filepath):
 			save_prev_epochs_filepath_exists = True
 			break
 		else:
@@ -614,14 +606,14 @@ def fit_n_save_model(X_train, y_train,
 		last_epochs = [item.strip() for item in last_epochs]
 		all_previous_epochs_nbr = len(last_epochs)
 		epochs -= all_previous_epochs_nbr
-		utils.print_style(text = f"\nOkay {model_filepath.split('/')[-1]} and {save_prev_epochs_filepath.split('/')[-1]} found !!!\n",
+		print_style(text = f"\nOkay {model_filepath.split('/')[-1]} and {save_prev_epochs_filepath.split('/')[-1]} found !!!\n",
 					color = "green", 
 					bold = True, 
 					underline = False)
 		# time.sleep(3)
 	else:
 		for _ in range(10):
-			utils.print_style(text = "Fitting model will start from zero !!!", 
+			print_style(text = "Fitting model will start from zero !!!", 
 						color = "red", 
 						bold = True, 
 						underline = False)
@@ -820,7 +812,7 @@ def direct_download_file(cloud_file_path_name, local_file_path_name):
 				cloud_file_path_name = cloud_file_path_name, 
 				local_file_path_name = local_file_path_name)
 
-	if utils.check_file_exists(filepath = local_file_path_name):
+	if check_file_exists(filepath = local_file_path_name):
 		return True
 	else:
 		return False
