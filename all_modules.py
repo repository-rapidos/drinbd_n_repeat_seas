@@ -41,6 +41,128 @@ firebase_config = {
 }
 
 
+
+###################################
+########## SECTION UTILS:
+
+
+import datetime
+import warnings
+import pandas as pd
+import os
+import platform
+import time
+
+
+def print_style(text, color = None, bold = False, underline = False):
+	colors = {"purple":'\033[95m',
+			"cyan":'\033[96m',
+			"darkcyan":'\033[36m',
+			"blue":'\033[94m',
+			"green":'\033[92m',
+			"yellow":'\033[93m',
+			"red":'\033[91m'}
+	other_style = {"bold":'\033[1m',
+				"underline":'\033[4m'}
+	end = '\033[0m'
+
+	if check_environment() == 'Colab':
+		if color is None and bold and not underline:
+			print(other_style['bold'] + text + end)
+		if color is None and not bold and underline:
+			print(other_style['underline'] + text + end)
+		if color is None and bold and underline:
+			print(other_style['bold'] + other_style['underline'] + text + end)
+		if bold and not underline and color is not None:
+			print(colors[color.lower()] + other_style['bold'] + text + end)
+		if underline and not bold and color is not None:
+			print(colors[color.lower()] + other_style['underline'] + text + end)
+		if underline and bold and color is not None:
+			print(colors[color.lower()] + other_style['bold'] + other_style['underline'] + text + end)
+		if not bold and not underline and color is not None:
+			print(colors[color.lower()] + text + end)
+		if not bold and not underline and color is None:
+			print(text)
+	elif check_environment() == 'Local_PC':
+		print(text)
+
+
+def install_pyrebase():
+	### Install Pyrebase4
+	for _ in range(2):
+		try:
+			import pyrebase
+			break
+		except:
+			# !pip install Pyrebase4
+			print_style("Installing Pyrebase4 ...\n", color = 'cyan')
+			os.system("pip install Pyrebase4")
+
+def manage_wargins():
+	pd.options.mode.chained_assignment = None
+	warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+
+def check_environment():
+	env_ = os.environ
+	if 'COLAB_GPU' in env_ or 'COLAB_JUPYTER_IP' in env_:
+		return 'Colab'
+	if platform.uname().node == "Gilbert-PC":
+		return 'Local_PC'
+
+def check_gdrive_connected(waiting = 60):
+	if check_environment() == 'Colab':
+		if not os.path.isdir(s = "/content/drive/MyDrive/"):
+			print("\n")
+			print_style("You are not connected to Google Drive", color = "red", bold = True)
+			print_style("Please connect !", color = "yellow", bold = True)
+			continue_runtime = time.time() + waiting + (3600*2)
+			continue_runtime = datetime.datetime.fromtimestamp(continue_runtime)
+
+			now_ = time.time() + (3600*2)
+			print("Datetime now is :", datetime.datetime.fromtimestamp(now_))
+			print(f"Next lines of code will run within {waiting} second(s). \n\tSo at datetime: {continue_runtime}.")
+			time.sleep(waiting)
+
+	else:
+		print("We are not using Google Colab !")
+
+def save_pickle(filepath, data):
+	with open(filepath, 'wb') as file_pi:
+		pickle.dump(data, file_pi)
+
+def load_pickle(filepath):
+	with open(filepath, "rb") as file_pi:
+		loaded_ = pickle.load(file_pi)
+	return loaded_
+
+def check_file_exists(filepath):
+	return os.path.isfile(path = filepath)
+
+def wait_gdrive_connected():
+	"""
+	check if google drive is already connected:
+	- if so, pass
+	- else: wait.
+	"""
+	if check_environment() == 'Colab':
+		start_time_while_drive = time.time()
+		print_style('\nDrive not yet connected !', color = 'red', bold = True)
+		while True:
+			if not os.path.isdir(s = "/content/drive/MyDrive/"):
+				time.sleep(1)			
+			else:
+				print_style("\nOkay, Drive successfully connected !", color = 'green', bold = True)
+				elasped_while_drive = time.time() - start_time_while_drive
+				print_style(f"Elapsed time : {round(elasped_while_drive, 2)} seconds or {round(elasped_while_drive/60, 2)} minutes.\n", 
+					color = 'cyan', bold = True)
+				break
+
+
+if platform.uname().node != "Gilbert-PC" and check_environment() != 'Colab':
+	print("\n\tWe are not neither on Gilbert-PC nor on Colab !!!")
+	time.sleep(60)
+
+
 ###################################
 ########## SECTION DATASCOENCE:
 
@@ -1100,130 +1222,6 @@ if __name__ == '__main__':
 
 	# plt.plot(df["seasonality_2"].tolist())
 	# plt.show()
-
-
-
-###################################
-########## SECTION UTILS:
-
-
-import datetime
-import warnings
-import pandas as pd
-import os
-import platform
-import time
-
-
-def print_style(text, color = None, bold = False, underline = False):
-	colors = {"purple":'\033[95m',
-			"cyan":'\033[96m',
-			"darkcyan":'\033[36m',
-			"blue":'\033[94m',
-			"green":'\033[92m',
-			"yellow":'\033[93m',
-			"red":'\033[91m'}
-	other_style = {"bold":'\033[1m',
-				"underline":'\033[4m'}
-	end = '\033[0m'
-
-	if check_environment() == 'Colab':
-		if color is None and bold and not underline:
-			print(other_style['bold'] + text + end)
-		if color is None and not bold and underline:
-			print(other_style['underline'] + text + end)
-		if color is None and bold and underline:
-			print(other_style['bold'] + other_style['underline'] + text + end)
-		if bold and not underline and color is not None:
-			print(colors[color.lower()] + other_style['bold'] + text + end)
-		if underline and not bold and color is not None:
-			print(colors[color.lower()] + other_style['underline'] + text + end)
-		if underline and bold and color is not None:
-			print(colors[color.lower()] + other_style['bold'] + other_style['underline'] + text + end)
-		if not bold and not underline and color is not None:
-			print(colors[color.lower()] + text + end)
-		if not bold and not underline and color is None:
-			print(text)
-	elif check_environment() == 'Local_PC':
-		print(text)
-
-
-def install_pyrebase():
-	### Install Pyrebase4
-	for _ in range(2):
-		try:
-			import pyrebase
-			break
-		except:
-			# !pip install Pyrebase4
-			print_style("Installing Pyrebase4 ...\n", color = 'cyan')
-			os.system("pip install Pyrebase4")
-
-def manage_wargins():
-	pd.options.mode.chained_assignment = None
-	warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
-
-def check_environment():
-	env_ = os.environ
-	if 'COLAB_GPU' in env_ or 'COLAB_JUPYTER_IP' in env_:
-		return 'Colab'
-	if platform.uname().node == "Gilbert-PC":
-		return 'Local_PC'
-
-def check_gdrive_connected(waiting = 60):
-	if check_environment() == 'Colab':
-		if not os.path.isdir(s = "/content/drive/MyDrive/"):
-			print("\n")
-			print_style("You are not connected to Google Drive", color = "red", bold = True)
-			print_style("Please connect !", color = "yellow", bold = True)
-			continue_runtime = time.time() + waiting + (3600*2)
-			continue_runtime = datetime.datetime.fromtimestamp(continue_runtime)
-
-			now_ = time.time() + (3600*2)
-			print("Datetime now is :", datetime.datetime.fromtimestamp(now_))
-			print(f"Next lines of code will run within {waiting} second(s). \n\tSo at datetime: {continue_runtime}.")
-			time.sleep(waiting)
-
-	else:
-		print("We are not using Google Colab !")
-
-def save_pickle(filepath, data):
-	with open(filepath, 'wb') as file_pi:
-		pickle.dump(data, file_pi)
-
-def load_pickle(filepath):
-	with open(filepath, "rb") as file_pi:
-		loaded_ = pickle.load(file_pi)
-	return loaded_
-
-def check_file_exists(filepath):
-	return os.path.isfile(path = filepath)
-
-def wait_gdrive_connected():
-	"""
-	check if google drive is already connected:
-	- if so, pass
-	- else: wait.
-	"""
-	if check_environment() == 'Colab':
-		start_time_while_drive = time.time()
-		print_style('\nDrive not yet connected !', color = 'red', bold = True)
-		while True:
-			if not os.path.isdir(s = "/content/drive/MyDrive/"):
-				time.sleep(1)			
-			else:
-				print_style("\nOkay, Drive successfully connected !", color = 'green', bold = True)
-				elasped_while_drive = time.time() - start_time_while_drive
-				print_style(f"Elapsed time : {round(elasped_while_drive, 2)} seconds or {round(elasped_while_drive/60, 2)} minutes.\n", 
-					color = 'cyan', bold = True)
-				break
-
-
-if platform.uname().node != "Gilbert-PC" and check_environment() != 'Colab':
-	print("\n\tWe are not neither on Gilbert-PC nor on Colab !!!")
-	time.sleep(60)
-
-
 
 
 ###################################
