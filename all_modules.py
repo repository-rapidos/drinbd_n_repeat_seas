@@ -894,7 +894,12 @@ def get_balance_sheet(df_results,
 # except:
 # import main_variables
 # import utils
-import pyrebase
+
+
+### INSTALL AND IMPORT PYREBASE:
+###_____________________________
+install_pyrebase()
+# import pyrebase
 
 class FirebaseStorage:
 	def __init__(self, firebase_config):
@@ -1315,9 +1320,9 @@ def manage(test_nbr,
 	###_____________________________
 	wait_gdrive_connected()
 
-	### INSTALL PYREBASE:
-	###__________________
-	install_pyrebase()
+	# ### INSTALL PYREBASE:
+	# ###__________________
+	# install_pyrebase()
 
 	### PRINT TEST NBR:
 	###________________
