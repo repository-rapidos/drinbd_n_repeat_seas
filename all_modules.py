@@ -1315,6 +1315,10 @@ def manage(test_nbr,
 	###_____________________________
 	wait_gdrive_connected()
 
+	### INSTALL PYREBASE:
+	###__________________
+	install_pyrebase()
+
 	### PRINT TEST NBR:
 	###________________
 
