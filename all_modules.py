@@ -903,6 +903,7 @@ install_pyrebase()
 
 class FirebaseStorage:
 	def __init__(self, firebase_config):
+		import pyrebase
 		firebase = pyrebase.initialize_app(firebase_config)
 		self.storage = firebase.storage()
 
