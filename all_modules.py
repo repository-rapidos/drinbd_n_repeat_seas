@@ -1501,12 +1501,16 @@ def manage(test_nbr,
 	df_test['stationnarized_close'] = stationnarize_close_column(df = df_test,
 												close_column_name = close_column_name)
 
-	# print(df_train)
-	# # print("df_train columns :", df_train.columns.tolist())
-	# print("\n")
-	# print(df_test)
-	# # print("df_test columns :", df_test.columns.tolist())
-	# print("\n\n")
+	print(df_train)
+	print()
+	print_style("df_train columns :", df_train.columns.tolist(), 
+				color = informative_color)
+	print("\n")
+	print(df_test)
+	print()
+	print_style("df_test columns :", df_test.columns.tolist(), 
+				color = informative_color)
+	print("\n")
 
 	### SCALE TRAIN AND TEST DATA:
 	###___________________________
@@ -1558,9 +1562,11 @@ def manage(test_nbr,
 	X_test = x_y_test['dataX']
 	# y_test = x_y_test['dataY']
 
-	# print("Shape of X_train :", X_train.shape)
-	# print("Shape of y_train :", y_train.shape)
-	# print("Shape of X_test  :", X_test.shape)
+	print("\n")
+	print_style("Shape of X_train :", X_train.shape, color = informative_color)
+	print_style("Shape of y_train :", y_train.shape, color = informative_color)
+	print_style("Shape of X_test  :", X_test.shape, color = informative_color)
+	print("\n")
 
 	### DOWNLOAD LANDMARKS ABOUT FITTING:
 	###__________________________________
