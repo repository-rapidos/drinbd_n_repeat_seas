@@ -1503,12 +1503,12 @@ def manage(test_nbr,
 
 	print(df_train)
 	print()
-	print_style("df_train columns :", df_train.columns.tolist(), 
+	print_style(f"df_train columns : {df_train.columns.tolist()}", 
 				color = informative_color)
 	print("\n")
 	print(df_test)
 	print()
-	print_style("df_test columns :", df_test.columns.tolist(), 
+	print_style(f"df_test columns : {df_test.columns.tolist()}", 
 				color = informative_color)
 	print("\n")
 
@@ -1563,9 +1563,9 @@ def manage(test_nbr,
 	# y_test = x_y_test['dataY']
 
 	print("\n")
-	print_style("Shape of X_train :", X_train.shape, color = informative_color)
-	print_style("Shape of y_train :", y_train.shape, color = informative_color)
-	print_style("Shape of X_test  :", X_test.shape, color = informative_color)
+	print_style(f"Shape of X_train :{X_train.shape}", color = informative_color)
+	print_style(f"Shape of y_train :{y_train.shape}", color = informative_color)
+	print_style(f"Shape of X_test  :{X_test.shape}", color = informative_color)
 	print("\n")
 
 	### DOWNLOAD LANDMARKS ABOUT FITTING:
