@@ -1314,6 +1314,7 @@ def manage(test_nbr,
 		# results_cloud_path,
 		verbose_eval,
 		prevent_wait,
+		slice_df_index = None,
 		df_tail = None,
 		df_head = None,
 		):
@@ -1338,6 +1339,9 @@ def manage(test_nbr,
 	### the can be None simultaneously or
 	### if one of them is None the other shall not
 	assert df_head is None or df_tail is None, '"df_head" and "df_tail" must not be != None simultaneously !'
+	assert df_head is None or slice_df_index is None, '"df_head" and "slice_df_index" must not be != None simultaneously !'
+	assert df_tail is None or slice_df_index is None, '"df_tail" and "slice_df_index" must not be != None simultaneously !'
+	assert isinstance(slice_df_index, tuple), '"slice_df_index" must be a tuple.'
 
 	# ### INITIALIZE FIREBASE STORAGE:
 	# ### ____________________________
@@ -1401,6 +1405,8 @@ def manage(test_nbr,
 		df = df.head(df_head)
 	if df_tail is not None:
 		df = df.tail(df_tail)
+	if slice_df_index is not None:
+		df = df.iloc[slice_df_index[0]: slice_df_index[1], :]
 	df.reset_index(inplace = True, drop = True)
 
 	### ADD TARGET:
