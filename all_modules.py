@@ -1320,8 +1320,8 @@ def manage(test_nbr,
 	df_test.reset_index(inplace = True, drop = True)
 
 	# print("len_get_seas      :", len_get_seas)
-	print_style("Shape of df_train : ====>", df_train.shape, color = informative_color)
-	print_style("Shape of df_test  : ====>", df_test.shape, color = informative_color)
+	print_style(f"Shape of df_train : {df_train.shape}", color = informative_color)
+	print_style(f"Shape of df_test  : {df_test.shape}", color = informative_color)
 
 	### 3/3. ADD WAVELETS COLUMNS AND STATIONNARIZED CLOSE:
 	###____________________________________________________
