@@ -1276,20 +1276,6 @@ if check_environment() == 'Colab':
 			os.system("pip install Pyrebase4")
 
 
-
-"""
-DON'T FORGET:
-____________
-
-- pendant le test du code: interrompre le fitting du model puis re-executer le code pour voir si ce
-fitting sera resumé (pourra continuer là ou il s'est arreté)
-
-- 
-
-"""
-
-
-
 def manage(test_nbr,
 		dataset_key,
 		close_column_name,
@@ -1341,7 +1327,8 @@ def manage(test_nbr,
 	assert df_head is None or df_tail is None, '"df_head" and "df_tail" must not be != None simultaneously !'
 	assert df_head is None or slice_df_index is None, '"df_head" and "slice_df_index" must not be != None simultaneously !'
 	assert df_tail is None or slice_df_index is None, '"df_tail" and "slice_df_index" must not be != None simultaneously !'
-	assert isinstance(slice_df_index, tuple), '"slice_df_index" must be a tuple.'
+	if slice_df_index is not None:
+		assert isinstance(slice_df_index, tuple), '"slice_df_index" must be a tuple.'
 
 	# ### INITIALIZE FIREBASE STORAGE:
 	# ### ____________________________
@@ -1382,8 +1369,6 @@ def manage(test_nbr,
 		# 					"low":list(range(300, 400)),
 		# 					"close":list(range(500, 600)),
 		# 					})
-
-
 
 		informative_color = None
 		alert_color = None
