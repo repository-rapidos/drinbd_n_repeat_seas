@@ -189,7 +189,6 @@ class ManageWithWaveletes:
 	### 1. Signal Analysis using DWT
 	def dwt_signal_analysis(self, plot_result = False):
 		# Apply DWT:
-		# print("len of signal ******************", len(self.signal))
 		coeffs = pywt.dwt(self.signal, 'db1')
 		cA, cD = coeffs
 		# ### (cA, cD) : Approximation and detail coefficients.
@@ -477,6 +476,101 @@ def native_x_y_spliter(df, data_cols_names, target_col_name, look_back):
 	dataY = np.array(dataY)
 	return {"dataX":dataX, "dataY":dataY}
 
+
+
+if __name__ == '__main__':
+	df = pd.read_csv(r'C:\Users\LENOVO\AppData\Local\Programs\Python\Python37-32\Lib\site-packages\projects\trading_and_ai\data\recent_data\EURUSD-2023-12-13_2024-01-23.csv')
+	# print(df)
+	df = df.head(501)
+
+	# limit_stationnarization = 3
+	# close_column_name = 'close'
+	# close_column = df[close_column_name]
+
+	# # print("len df :", df.shape[0])
+
+	# df_dwt_ = add_wavelets_columns(close_column = close_column,
+	# 						limit_stationnarization = limit_stationnarization)
+
+	# dwt_cA = df_dwt_['dwt_cA']
+	# dwt_cD = df_dwt_['dwt_cD']
+	# dwt_cA_stationnarized = df_dwt_['dwt_cA_stationnarized']
+
+
+	# # print(df_dwt_)
+	# print("type dwt_cA:", type(dwt_cA))
+	# print("len dwt_cA:", len(dwt_cA), "\n")
+	# print("type dwt_cD:", type(dwt_cD))
+	# print("len dwt_cD:", len(dwt_cD), "\n")
+	# print("type dwt_cA_stationnarized:", type(dwt_cA_stationnarized))
+	# print("len dwt_cA_stationnarized:", len(dwt_cA_stationnarized), "\n")
+	# print("\n")
+
+	# stationnarized_close_ = stationnarize_close_column(df = df, 
+	# 						close_column_name = close_column_name, 
+	# 						limit_stationnarization = limit_stationnarization)
+
+	# print("length of stationnarized_close_:", len(stationnarized_close_), "\n")
+
+	# from pprint import pprint
+	# pprint(stationnarized_close_[:5])
+	# print("...")
+	# pprint(stationnarized_close_[len(stationnarized_close_)-5:])
+	# print("\n")
+
+	# """
+	# data_cols_names_seasonality = [f'seasonality_{d}' for d in freqs_seasonal]
+	# data_cols_names = ['close', 
+	# 					'stationnarized_close',
+	# 					# 'soft_0.5', 
+	# 					# 'less_0.5', 
+	# 					# 'soft_0.5_stationnarized',
+	# 					'dwt_cA', 
+	# 					'dwt_cD', 
+	# 					'dwt_cA_stationnarized']
+	# data_cols_names += data_cols_names_seasonality
+	# """
+
+
+
+
+	#############
+
+	# print(df.columns.tolist())
+	# df = add_target(df = df,
+	# 				close_column_name = 'close', 
+	# 				target_type = 'classification',
+	# 				target_shift = 1,
+	# 				ratio_true_trend = .31)
+
+	# # print(df)
+	# print("\n")
+	# print(df.columns.tolist())
+
+
+	#############
+
+	df_simulated = pd.DataFrame({'open':list(range(1,11)), 
+						'close':list(range(21,31))})
+
+	df_simulated['target'] = [random.choice([0,1]) for _ in range(len(df_simulated))]
+
+	data_cols_names = ['open', 'close']
+	target_col_name = 'target'
+	look_back = 5
+	data_xy = native_x_y_spliter(df = df_simulated, 
+							data_cols_names = data_cols_names, 
+							target_col_name = target_col_name, 
+							look_back = look_back)
+
+	# {"dataX":dataX, "dataY":dataY}
+	X = data_xy['dataX']
+	y = data_xy['dataY']
+
+	print(df_simulated, "\n")
+	for x_, y_ in zip(X, y):
+		print(x_, " ===> ", y_)
+		print("\n")
 
 
 ###################################
@@ -1069,8 +1163,77 @@ def add_seas_column_to_df(df, size_get_seas, freq, close_col_name,
 	return df
 
 
+if __name__ == '__main__':
+	
+	df = pd.read_csv(r'C:\Users\LENOVO\AppData\Local\Programs\Python\Python37-32\Lib\site-packages\projects\trading_and_maths\concept_1\data\EURUSD_2021_10_1_2021_11_15_ohlcv_1_min-.csv')
+	# df = df.head(500)
+	df = df.head(100)
+	# print(df)
+	# print("------------------------------")
+
+	close_col_name = 'close'
+	plot_results = False
+	freq = 15
+	seasons_2_add = 2
+	close_column = df[close_col_name]
+
+	# series = [4,3,5, 1,5,4,9,6,7, 1,5,4,9,6,7, 1,5,4,9,6,7,]
+	# series = [4,3,5, 9,3,5,1,5, 9,3,5,1,5, 9,3,5,1,5, 9,3,5,1,5,]
+
+
+	# series_with_more_seasons = regenerate_seasonality(close_column = close_column,
+	# 										seasons_2_add = seasons_2_add,
+	# 										plot_results = plot_results,
+	# 										freq = freq)
+	
+	# print("series_with_more_seasons :", series_with_more_seasons)
+	# print("len series_with_more_seasons :", len(series_with_more_seasons))
+
+	# plt.subplot(3, 1, 3)
+	# plt.plot(seasonal_fragment*int(len(df)/freq))
+	# plt.show()
+
+
+	### ADD SEAS COLUMN TO DF:
+	size_get_seas = 0.3
+	# freq = 15
+
+	freqs_seasonal = [2, 5, 10]
+	# freqs_seasonal = [2,]
+	
+	print(df, "\n")
+
+	df_close_1 = df.close
+
+	for freq in freqs_seasonal:
+		df = add_seas_column_to_df(df = df, 
+							size_get_seas = size_get_seas, 
+							freq = freq, 
+							close_col_name = close_col_name)
+
+		print("df columns :", df.columns.tolist())
+
+
+	# plt.plot(df.seasonality_15)
+	# plt.show()
+	columns = df.columns.tolist()
+	seas_cols = [col for col in columns if 'seasonality_' in col]
+
+
+	print(df[seas_cols], "\n")
+	# print("seasonality_2:", df["seasonality_2"].tolist(), "\n")
+	print(df, "\n")
+
+	plt.plot(df[seas_cols])
+	# plt.show()
+
+	# plt.plot(df["seasonality_2"].tolist())
+	# plt.show()
+
+
 ###################################
 ########## SECTION MANAGE:
+
 
 # from statsmodels.tsa.seasonal import seasonal_decompose
 # from sklearn.model_selection import train_test_split
@@ -1113,6 +1276,20 @@ if check_environment() == 'Colab':
 			os.system("pip install Pyrebase4")
 
 
+
+"""
+DON'T FORGET:
+____________
+
+- pendant le test du code: interrompre le fitting du model puis re-executer le code pour voir si ce
+fitting sera resumé (pourra continuer là ou il s'est arreté)
+
+- 
+
+"""
+
+
+
 def manage(test_nbr,
 		dataset_key,
 		close_column_name,
@@ -1135,7 +1312,6 @@ def manage(test_nbr,
 		
 		# modulo_verbose_x_test_comp,
 		# results_cloud_path,
-		take_seasonality_on_beginning,
 		verbose_eval,
 		prevent_wait,
 		slice_df_index = None,
@@ -1208,6 +1384,8 @@ def manage(test_nbr,
 		# 					"close":list(range(500, 600)),
 		# 					})
 
+
+
 		informative_color = None
 		alert_color = None
 		good_color = None
@@ -1224,29 +1402,26 @@ def manage(test_nbr,
 	
 	### FRAGMENT LENGTH OF DF ACCORDING TO CONDITIONS AND RESET ITS INDEX:
 	df = df[['open', 'high', 'low', 'close']]
-
-	if not take_seasonality_on_beginning:
-		if df_head is not None:
-			df = df.head(df_head)
-		if df_tail is not None:
-			df = df.tail(df_tail)
-		if slice_df_index is not None:
-			df = df.iloc[slice_df_index[0]: slice_df_index[1], :]
-		df.reset_index(inplace = True, drop = True)
+	if df_head is not None:
+		df = df.head(df_head)
+	if df_tail is not None:
+		df = df.tail(df_tail)
+	if slice_df_index is not None:
+		df = df.iloc[slice_df_index[0]: slice_df_index[1], :]
+	df.reset_index(inplace = True, drop = True)
 
 	### ADD TARGET:
 	###____________
 
 	df = add_target(df = df,
-					close_column_name = close_column_name, 
-					target_type = target_type,
-					target_shift = target_shift,
-					ratio_true_trend = ratio_true_trend)
+							close_column_name = close_column_name, 
+							target_type = target_type,
+							target_shift = target_shift,
+							ratio_true_trend = ratio_true_trend)
 
 	### DETECT THE TYPE OF SUB-CONCEPT:
 	###________________________________
 
-	# ### def asserts_and_sub_concept_sizing():
 	if isinstance(sub_concept_n_size, tuple):
 		assert isinstance(sub_concept_n_size[0], str), 'The first value of "sub_concept_n_size" must be a string.'
 		assert sub_concept_n_size[0] == 'first' or sub_concept_n_size[0] == 'second', 'when "sub_concept_n_size" is a tuple, its first value must be equals to "first" or "second".'
@@ -1256,9 +1431,7 @@ def manage(test_nbr,
 
 		sub_concept = sub_concept_n_size[0]
 		size_get_seas = sub_concept_n_size[1]
-
-		if not take_seasonality_on_beginning:
-			len_get_seas = int(df.shape[0]*size_get_seas)
+		len_get_seas = int(df.shape[0]*size_get_seas)
 
 		# print("size_get_seas :", size_get_seas)
 		# print("len_get_seas  :", len_get_seas)
@@ -1273,7 +1446,7 @@ def manage(test_nbr,
 
 	if sub_concept == 'second':
 		assert size_get_seas < train_size, 'when sub_concept == "second", "size_get_seas" must be < to "train_size".'
-
+	
 	### HANDLE COLUMNS AND SPLIT TRAIN AND TEST:
 	###_________________________________________
 	
@@ -1287,21 +1460,6 @@ def manage(test_nbr,
 							close_col_name = close_column_name)
 
 		# print(df)
-
-	if take_seasonality_on_beginning:
-		if df_head is not None:
-			df = df.head(df_head)
-		if df_tail is not None:
-			df = df.tail(df_tail)
-		if slice_df_index is not None:
-			df = df.iloc[slice_df_index[0]: slice_df_index[1], :]
-		df.reset_index(inplace = True, drop = True)
-
-		## Now we can calculate the len_get_seas
-		len_get_seas = int(df.shape[0]*size_get_seas)
-
-		print("Df shape -----------------:", df.shape)
-
 
 	### 2/3. SPLIT TRAIN AND TEST:
 	###___________________________
@@ -1319,9 +1477,14 @@ def manage(test_nbr,
 	df_train.reset_index(inplace = True, drop = True)
 	df_test.reset_index(inplace = True, drop = True)
 
-	# print("len_get_seas      :", len_get_seas)
-	print_style(f"Shape of df_train : {df_train.shape}", color = informative_color)
-	print_style(f"Shape of df_test  : {df_test.shape}", color = informative_color)
+	# print("original df_test")
+	# print(df_test)
+
+	# print(df_train)
+	# print("df_train columns :", df_train.columns.tolist())
+	# print("\n")
+	# print(df_test)
+	# print("df_test columns :", df_test.columns.tolist())
 
 	### 3/3. ADD WAVELETS COLUMNS AND STATIONNARIZED CLOSE:
 	###____________________________________________________
@@ -1504,6 +1667,12 @@ def manage(test_nbr,
 	### SIGNAL THE ENDING OF CODE:
 	###___________________________
 	print_style("\n\tFinished", color = good_color, bold = bold)
+
+
+
+
+
+
 
 
 
