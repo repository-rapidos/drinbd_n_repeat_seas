@@ -477,102 +477,6 @@ def native_x_y_spliter(df, data_cols_names, target_col_name, look_back):
 	return {"dataX":dataX, "dataY":dataY}
 
 
-
-if __name__ == '__main__':
-	df = pd.read_csv(r'C:\Users\LENOVO\AppData\Local\Programs\Python\Python37-32\Lib\site-packages\projects\trading_and_ai\data\recent_data\EURUSD-2023-12-13_2024-01-23.csv')
-	# print(df)
-	df = df.head(501)
-
-	# limit_stationnarization = 3
-	# close_column_name = 'close'
-	# close_column = df[close_column_name]
-
-	# # print("len df :", df.shape[0])
-
-	# df_dwt_ = add_wavelets_columns(close_column = close_column,
-	# 						limit_stationnarization = limit_stationnarization)
-
-	# dwt_cA = df_dwt_['dwt_cA']
-	# dwt_cD = df_dwt_['dwt_cD']
-	# dwt_cA_stationnarized = df_dwt_['dwt_cA_stationnarized']
-
-
-	# # print(df_dwt_)
-	# print("type dwt_cA:", type(dwt_cA))
-	# print("len dwt_cA:", len(dwt_cA), "\n")
-	# print("type dwt_cD:", type(dwt_cD))
-	# print("len dwt_cD:", len(dwt_cD), "\n")
-	# print("type dwt_cA_stationnarized:", type(dwt_cA_stationnarized))
-	# print("len dwt_cA_stationnarized:", len(dwt_cA_stationnarized), "\n")
-	# print("\n")
-
-	# stationnarized_close_ = stationnarize_close_column(df = df, 
-	# 						close_column_name = close_column_name, 
-	# 						limit_stationnarization = limit_stationnarization)
-
-	# print("length of stationnarized_close_:", len(stationnarized_close_), "\n")
-
-	# from pprint import pprint
-	# pprint(stationnarized_close_[:5])
-	# print("...")
-	# pprint(stationnarized_close_[len(stationnarized_close_)-5:])
-	# print("\n")
-
-	# """
-	# data_cols_names_seasonality = [f'seasonality_{d}' for d in freqs_seasonal]
-	# data_cols_names = ['close', 
-	# 					'stationnarized_close',
-	# 					# 'soft_0.5', 
-	# 					# 'less_0.5', 
-	# 					# 'soft_0.5_stationnarized',
-	# 					'dwt_cA', 
-	# 					'dwt_cD', 
-	# 					'dwt_cA_stationnarized']
-	# data_cols_names += data_cols_names_seasonality
-	# """
-
-
-
-
-	#############
-
-	# print(df.columns.tolist())
-	# df = add_target(df = df,
-	# 				close_column_name = 'close', 
-	# 				target_type = 'classification',
-	# 				target_shift = 1,
-	# 				ratio_true_trend = .31)
-
-	# # print(df)
-	# print("\n")
-	# print(df.columns.tolist())
-
-
-	#############
-
-	df_simulated = pd.DataFrame({'open':list(range(1,11)), 
-						'close':list(range(21,31))})
-
-	df_simulated['target'] = [random.choice([0,1]) for _ in range(len(df_simulated))]
-
-	data_cols_names = ['open', 'close']
-	target_col_name = 'target'
-	look_back = 5
-	data_xy = native_x_y_spliter(df = df_simulated, 
-							data_cols_names = data_cols_names, 
-							target_col_name = target_col_name, 
-							look_back = look_back)
-
-	# {"dataX":dataX, "dataY":dataY}
-	X = data_xy['dataX']
-	y = data_xy['dataY']
-
-	print(df_simulated, "\n")
-	for x_, y_ in zip(X, y):
-		print(x_, " ===> ", y_)
-		print("\n")
-
-
 ###################################
 ########## SECTION DL MODEL:
 
@@ -601,13 +505,14 @@ if exec_environment == 'Colab':
 	class EachEpochCallback(keras.callbacks.Callback):
 		def __init__(self, verbose_epoch_in_callback, 
 			epochs, history_filepath, save_prev_epochs_filepath, 
-			loss_n_val_loss):
+			loss_n_val_loss, log_fitting_filepath):
 			
 			self.durations = []
 			self.verbose_epoch_in_callback = verbose_epoch_in_callback
 			self.epochs = epochs
 			self.history_filepath = history_filepath
 			self.save_prev_epochs_filepath = save_prev_epochs_filepath
+			self.log_fitting_filepath = log_fitting_filepath
 			self.loss_n_val_loss = loss_n_val_loss
 		
 		def on_epoch_begin(self, epoch, logs=None):
@@ -617,6 +522,12 @@ if exec_environment == 'Colab':
 			later = time.time()
 			duration = later - self.now
 			self.durations.append(duration)
+
+			with open(self.log_fitting_filepath, "a", encoding = "utf-8") as f:
+				f.write(f"Epoch          : {epoch + 1}\n")
+				f.write(f"On epoch start : {datetime.datetime.fromtimestamp(self.now)}\n")
+				f.write(f"On epoch end   : {datetime.datetime.fromtimestamp(later)}\n")
+				f.write(f"Epoch duration : {duration} second(s)\n\n")
 
 			self.loss_n_val_loss['loss'].append(logs["loss"])
 			self.loss_n_val_loss['val_loss'].append(logs["val_loss"])
@@ -668,6 +579,7 @@ def fit_n_save_model(X_train, y_train,
 	save_prev_epochs_filepath = gdrive_folder_path + f'prev_epochs_test_nbr_{test_nbr}.txt'
 	model_filepath = gdrive_folder_path + "model_test_nbr_" + f'{test_nbr}.h5'
 	history_filepath = gdrive_folder_path + f'history_test_nbr_{test_nbr}.pkl'
+	log_fitting_filepath = gdrive_folder_path + f"log_fitting_test_nbr_{test_nbr}.txt"
 
 	##########################
 	## LOAD OR CREATE HISTORY:
@@ -759,7 +671,8 @@ def fit_n_save_model(X_train, y_train,
 	each_epoch_callback = EachEpochCallback(verbose_epoch_in_callback = verbose_epoch_in_callback, 
 										epochs = epochs, history_filepath = history_filepath, 
 										save_prev_epochs_filepath = save_prev_epochs_filepath, 
-										loss_n_val_loss = loss_n_val_loss)
+										loss_n_val_loss = loss_n_val_loss,
+										log_fitting_filepath = log_fitting_filepath)
 
 	model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath = model_filepath,
 																monitor = 'loss',
@@ -1163,77 +1076,8 @@ def add_seas_column_to_df(df, size_get_seas, freq, close_col_name,
 	return df
 
 
-if __name__ == '__main__':
-	
-	df = pd.read_csv(r'C:\Users\LENOVO\AppData\Local\Programs\Python\Python37-32\Lib\site-packages\projects\trading_and_maths\concept_1\data\EURUSD_2021_10_1_2021_11_15_ohlcv_1_min-.csv')
-	# df = df.head(500)
-	df = df.head(100)
-	# print(df)
-	# print("------------------------------")
-
-	close_col_name = 'close'
-	plot_results = False
-	freq = 15
-	seasons_2_add = 2
-	close_column = df[close_col_name]
-
-	# series = [4,3,5, 1,5,4,9,6,7, 1,5,4,9,6,7, 1,5,4,9,6,7,]
-	# series = [4,3,5, 9,3,5,1,5, 9,3,5,1,5, 9,3,5,1,5, 9,3,5,1,5,]
-
-
-	# series_with_more_seasons = regenerate_seasonality(close_column = close_column,
-	# 										seasons_2_add = seasons_2_add,
-	# 										plot_results = plot_results,
-	# 										freq = freq)
-	
-	# print("series_with_more_seasons :", series_with_more_seasons)
-	# print("len series_with_more_seasons :", len(series_with_more_seasons))
-
-	# plt.subplot(3, 1, 3)
-	# plt.plot(seasonal_fragment*int(len(df)/freq))
-	# plt.show()
-
-
-	### ADD SEAS COLUMN TO DF:
-	size_get_seas = 0.3
-	# freq = 15
-
-	freqs_seasonal = [2, 5, 10]
-	# freqs_seasonal = [2,]
-	
-	print(df, "\n")
-
-	df_close_1 = df.close
-
-	for freq in freqs_seasonal:
-		df = add_seas_column_to_df(df = df, 
-							size_get_seas = size_get_seas, 
-							freq = freq, 
-							close_col_name = close_col_name)
-
-		print("df columns :", df.columns.tolist())
-
-
-	# plt.plot(df.seasonality_15)
-	# plt.show()
-	columns = df.columns.tolist()
-	seas_cols = [col for col in columns if 'seasonality_' in col]
-
-
-	print(df[seas_cols], "\n")
-	# print("seasonality_2:", df["seasonality_2"].tolist(), "\n")
-	print(df, "\n")
-
-	plt.plot(df[seas_cols])
-	# plt.show()
-
-	# plt.plot(df["seasonality_2"].tolist())
-	# plt.show()
-
-
 ###################################
 ########## SECTION MANAGE:
-
 
 # from statsmodels.tsa.seasonal import seasonal_decompose
 # from sklearn.model_selection import train_test_split
@@ -1251,8 +1095,6 @@ import os
 # import warnings
 # import platform
 # import pyrebase
-
-
 
 # from drinbd_n_repeat_seas import datascience
 # from drinbd_n_repeat_seas import dl_model
@@ -1414,10 +1256,10 @@ def manage(test_nbr,
 	###____________
 
 	df = add_target(df = df,
-							close_column_name = close_column_name, 
-							target_type = target_type,
-							target_shift = target_shift,
-							ratio_true_trend = ratio_true_trend)
+				close_column_name = close_column_name, 
+				target_type = target_type,
+				target_shift = target_shift,
+				ratio_true_trend = ratio_true_trend)
 
 	### DETECT THE TYPE OF SUB-CONCEPT:
 	###________________________________
@@ -1581,7 +1423,8 @@ def manage(test_nbr,
 	filenames_landmarks = [
 				f'prev_epochs_test_nbr_{test_nbr}.txt',
 				f'model_test_nbr_{test_nbr}.h5',
-				f'history_test_nbr_{test_nbr}.pkl',]
+				f'history_test_nbr_{test_nbr}.pkl',
+				f'log_fitting_test_nbr_{test_nbr}.txt']
 
 	print("\n")
 	for filename_landmark in filenames_landmarks:
@@ -1661,7 +1504,9 @@ def manage(test_nbr,
 			print_style(f"Successfully upload result file: {result_filename}:\n\t{result_upload}",
 				color = good_color, bold = bold)
 		else:
-			print_style(f"\nResult file {result_filename} wasn't downloaded !!!\n")
+			print_style(f"\nResult file {result_filename} wasn't uploaded !!!\n",
+				color = alert_color, bold = bold)
+
 	print("\n")
 
 	### SIGNAL THE ENDING OF CODE:
