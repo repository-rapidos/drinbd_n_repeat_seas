@@ -1428,16 +1428,17 @@ def manage(test_nbr,
 
 	print("\n")
 	for filename_landmark in filenames_landmarks:
-		result_downloading = direct_download_file(
-			cloud_file_path_name = landmarks_cloud_path + filename_landmark, 
-			local_file_path_name = gdrive_folder_path + filename_landmark)
+		if not check_file_exists(gdrive_folder_path + filename_landmark):
+			result_downloading = direct_download_file(
+				cloud_file_path_name = landmarks_cloud_path + filename_landmark, 
+				local_file_path_name = gdrive_folder_path + filename_landmark)
 
-		if result_downloading:
-			print_style(f"Successfully downloaded {filename_landmark}", 
-				color = good_color, bold = bold)
-		else:
-			print_style(f"File not downloaded: {filename_landmark}",
-				color = alert_color, bold = bold)
+			if result_downloading:
+				print_style(f"Successfully downloaded {filename_landmark}", 
+					color = good_color, bold = bold)
+			else:
+				print_style(f"File not downloaded: {filename_landmark}",
+					color = alert_color, bold = bold)
 	print("\n")
 
 	### FIT THE MODEL:
