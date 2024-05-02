@@ -579,7 +579,7 @@ def fit_n_save_model(X_train, y_train,
 	save_prev_epochs_filepath = gdrive_folder_path + f'prev_epochs_test_nbr_{test_nbr}.txt'
 	model_filepath = gdrive_folder_path + "model_test_nbr_" + f'{test_nbr}.h5'
 	history_filepath = gdrive_folder_path + f'history_test_nbr_{test_nbr}.pkl'
-	log_fitting_filepath = gdrive_folder_path + f"log_fitting_test_nbr_{test_nbr}.txt"
+	log_fitting_filepath = gdrive_folder_path + f'log_fitting_test_nbr_{test_nbr}.txt'
 
 	##########################
 	## LOAD OR CREATE HISTORY:
@@ -1492,6 +1492,7 @@ def manage(test_nbr,
 		f'prev_epochs_test_nbr_{test_nbr}.txt',
 		f'model_test_nbr_{test_nbr}.h5',
 		f'history_test_nbr_{test_nbr}.pkl',
+		f'log_fitting_test_nbr_{test_nbr}.txt',
 	]
 
 	print("\n")
