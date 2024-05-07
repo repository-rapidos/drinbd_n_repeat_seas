@@ -22,6 +22,8 @@ dataset_urls = {"dataset_test1":"https://github.com/GilbertAK/EURUSD_2021_10_1_2
 	"dataset_1_hour":"https://firebasestorage.googleapis.com/v0/b/saving-data-2ee4b.appspot.com/o/drown-in-bigdata%2Fdatasets%2FEURUSD-60.0%20Min--2024-3-18%209-0-0.csv?alt=media",
 	"dataset_2_hours":"https://firebasestorage.googleapis.com/v0/b/saving-data-2ee4b.appspot.com/o/drown-in-bigdata%2Fdatasets%2FEURUSD-120.0%20Min--2024-3-18%209-0-0.csv?alt=media",
 	"dataset_drinbd_n_repeat_seas_1":"https://firebasestorage.googleapis.com/v0/b/saving-data-2ee4b.appspot.com/o/csv_files%2FEURUSD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media",
+	"dataset_drinbd_n_repeat_seas_1_added_1":"https://firebasestorage.googleapis.com/v0/b/saving-data-2ee4b.appspot.com/o/datasets_csv%2Fdataset_drinbd_n_repeat_seas_1_added_1.csv?alt=media",
+	"dataset_drinbd_n_repeat_seas_1_added_2":"https://firebasestorage.googleapis.com/v0/b/saving-data-2ee4b.appspot.com/o/datasets_csv%2Fdataset_drinbd_n_repeat_seas_1_added_2.csv?alt=media",
 	}
 
 ### ===> firebase of account philippenshagi@gmail.com
