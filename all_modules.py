@@ -24,6 +24,27 @@ dataset_urls = {"dataset_test1":"https://github.com/GilbertAK/EURUSD_2021_10_1_2
 	"dataset_drinbd_n_repeat_seas_1":"https://firebasestorage.googleapis.com/v0/b/saving-data-2ee4b.appspot.com/o/csv_files%2FEURUSD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media",
 	"dataset_drinbd_n_repeat_seas_1_added_1":"https://firebasestorage.googleapis.com/v0/b/saving-data-2ee4b.appspot.com/o/datasets_csv%2Fdataset_drinbd_n_repeat_seas_1_added_1.csv?alt=media",
 	"dataset_drinbd_n_repeat_seas_1_added_2":"https://firebasestorage.googleapis.com/v0/b/saving-data-2ee4b.appspot.com/o/datasets_csv%2Fdataset_drinbd_n_repeat_seas_1_added_2.csv?alt=media",
+	########## Many Pairs:
+	'dataset_drinbd_n_repeat_seas_NZDUSD': f'{common_path_firebase_strg}NZDUSD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_EURGBP': f'{common_path_firebase_strg}EURGBP-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_USDCHF': f'{common_path_firebase_strg}USDCHF-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_GBPJPY': f'{common_path_firebase_strg}GBPJPY-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_NZDJPY': f'{common_path_firebase_strg}NZDJPY-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_CHFJPY': f'{common_path_firebase_strg}CHFJPY-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_GBPUSD': f'{common_path_firebase_strg}GBPUSD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_EURJPY': f'{common_path_firebase_strg}EURJPY-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_CADJPY': f'{common_path_firebase_strg}CADJPY-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_USDJPY': f'{common_path_firebase_strg}USDJPY-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_EURAUD': f'{common_path_firebase_strg}EURAUD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_EURNZD': f'{common_path_firebase_strg}EURNZD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_GBPCAD': f'{common_path_firebase_strg}GBPCAD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_EURCHF': f'{common_path_firebase_strg}EURCHF-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_GBPCHF': f'{common_path_firebase_strg}GBPCHF-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_EURCAD': f'{common_path_firebase_strg}EURCAD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_GBPAUD': f'{common_path_firebase_strg}GBPAUD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_AUDJPY': f'{common_path_firebase_strg}AUDJPY-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_USDCAD': f'{common_path_firebase_strg}USDCAD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
+	'dataset_drinbd_n_repeat_seas_AUDUSD': f'{common_path_firebase_strg}AUDUSD-1.0%20Min--2024-4-18%200-1-0.csv?alt=media',
 	}
 
 ### ===> firebase of account philippenshagi@gmail.com
