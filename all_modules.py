@@ -11,6 +11,8 @@ landmarks_cloud_path = "drinbd-n-repeat-seas/landmarks/"
 gdrive_folder_path = '/content/drive/MyDrive/'
 
 common_path = "https://github.com/GilbertAK/eurusd_data/blob/main/"
+common_path_firebase_strg = "https://firebasestorage.googleapis.com/v0/b/saving-data-2ee4b.appspot.com/o/datasets_csv%2F"
+
 dataset_urls = {"dataset_test1":"https://github.com/GilbertAK/EURUSD_2021_10_1_2021_11_15_ohlcv_1_min/blob/main/EURUSD_2021_10_1_2021_11_15_ohlcv_1_min-.csv",
 	"dataset_test12":common_path + "EURUSD-2023-07-25_2023-08-31.csv",
 	"dataset_test13":common_path + "EURUSD-2023-08-23_2023-09-29.csv",
