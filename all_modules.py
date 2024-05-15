@@ -373,8 +373,8 @@ def add_wavelets_columns(close_column, limit_stationnarization = 3):
 	cD_duplicated = duplicate_rows(series = cD)
 
 	if not is_pair(close_column.shape[0]):
-		cA_duplicated = cA_duplicated[1:]
-		cD_duplicated = cD_duplicated[1:]
+		cA_duplicated = cA_duplicated[:-1]
+		cD_duplicated = cD_duplicated[:-1]
 
 	# print("len cA_duplicated is:", len(cA_duplicated))
 	# print("len cD_duplicated is:", len(cD_duplicated))
