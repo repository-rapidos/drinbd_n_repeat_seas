@@ -13,7 +13,7 @@ DON'T FORGET:
 """
 TO TEST:
 
-- ### CHECK IF GPU IS CONNECTED:
+- ### CHECK IF GPU IS CONNECTED: when we choosed tpu one or another
 
 - ### DOWNLOAD INFORMATION FILES IF NECESSARY:
 
@@ -1348,7 +1348,7 @@ sur Firebase Storage (le df utilisé lors de l\'entrainement du modèle).
 		###_______________
 		opened_binary_trades_ids = []
 		opened_digital_trades_ids = []
-		print_style("\nWe start the long loop ...\n", color = IqBot.INFORMATIVE_COLOR)
+		# print_style("\nWe start the long loop ...\n", color = IqBot.INFORMATIVE_COLOR)
 		while True:
 			### RUN THE ITERATION ONLY ON THE BEGINNING OF A MINUTE:
 			if self.loop_window[0] <= datetime.datetime.now().second <= self.loop_window[1]:
@@ -1367,9 +1367,8 @@ sur Firebase Storage (le df utilisé lors de l\'entrainement du modèle).
 
 				message_date_from_big_df_small_df_diff = '''La PREMIÈRE valeur de la colonne "date_from" de "small_df" doit être parmi 
 les DERNIÈRES valeurs de la même colonne pour le "big_df"'''
-
-				print("Small df :")
-				print(small_df[['date_from', 'date_to', 'close']], "\n")
+				# print("Small df :")
+				# print(small_df[['date_from', 'date_to', 'close']], "\n")
 
 				first_date_from_small_df = get_first_date_from_value(small_df)
 				last_date_from_values_big_df = get_last_date_from_values(
@@ -1398,9 +1397,8 @@ les DERNIÈRES valeurs de la même colonne pour le "big_df"'''
 				complete_df.drop_duplicates('date_from', keep = 'last' , inplace = True)
 				complete_df.reset_index(inplace = True, drop = True)
 				complete_df_shape = complete_df.shape
-
-				print("Complete df :")
-				print(complete_df[['date_from', 'date_to', 'close']], "\n")
+				# print("Complete df :")
+				# print(complete_df[['date_from', 'date_to', 'close']], "\n")
 
 				### ADD COLUMNS TO complete_df:
 				###____________________________
@@ -1436,12 +1434,8 @@ les DERNIÈRES valeurs de la même colonne pour le "big_df"'''
 												close_column_name = self.close_column_name)
 				df_test_shape = df_test.shape
 
-				### SCALE TEST DATA:
-				###_________________
-				df_test_scaled, _ = data_scaler(df = df_test)
-
-				### SET DATA COLUMNS NAMES:
-				###________________________
+				### JUST TAKE CONCERNED COLUMNS :
+				###______________________________
 				data_cols_names_seasonality = [f'seasonality_{d}' for d in self.freqs_seasonal]
 				data_cols_names = ['close', 
 									'stationnarized_close',
@@ -1452,6 +1446,11 @@ les DERNIÈRES valeurs de la même colonne pour le "big_df"'''
 									'dwt_cD', 
 									'dwt_cA_stationnarized']
 				data_cols_names += data_cols_names_seasonality
+				df_test = df_test[data_cols_names]
+
+				### SCALE TEST DATA:
+				###_________________
+				df_test_scaled, _ = data_scaler(df = df_test)
 
 				### TEST:
 				###______
@@ -1589,15 +1588,25 @@ les DERNIÈRES valeurs de la même colonne pour le "big_df"'''
 					print_style(f"Balance before      : {balance_before} $", color = IqBot.INFORMATIVE_COLOR)
 					print_style(f"Invested amount     : {amount} $", color = IqBot.INFORMATIVE_COLOR)
 					print_style(f"Datetime            : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
-					print_style(f"Trade signal        : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
-				if "Cannot purchase an option (active is suspended)" in str(id_binary):
-					print_style(f"\nBinary trade not taken because: {pair} is suspended !", color = IqBot.INFORMATIVE_COLOR)
-					print_style(f"Datetime                 : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
-					print_style(f"Trade signal             : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
-				if "invalid instrument" in str(id_digital):
-					print_style(f"\nDigital trade not taken because: {pair} is suspended !", color = IqBot.INFORMATIVE_COLOR)
-					print_style(f"Datetime                 : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
-					print_style(f"Trade signal             : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
+				else:
+					print_style(f"\nNo trade taken on {pair}.", color = IqBot.INFORMATIVE_COLOR)
+					print_style(f"Datetime            : {datetime.datetime.fromtimestamp(int(time.time()))}", color = IqBot.INFORMATIVE_COLOR)
+				print_style(f"Trade signal        : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
+
+				# try:
+				# 	if "Cannot purchase an option (active is suspended)" in str(id_binary):
+				# 		print_style(f"\nBinary trade not taken because: {pair} is suspended !", color = IqBot.INFORMATIVE_COLOR)
+				# 		print_style(f"Datetime                 : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
+				# 		print_style(f"Trade signal             : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
+				# except:
+				# 	pass
+				# try:
+				# 	if "invalid instrument" in str(id_digital):
+				# 		print_style(f"\nDigital trade not taken because: {pair} is suspended !", color = IqBot.INFORMATIVE_COLOR)
+				# 		print_style(f"Datetime                 : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
+				# 		print_style(f"Trade signal             : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
+				# except:
+				# 	pass
 				print("\n")
 
 				ending_treatment_time = time.time()
@@ -1610,8 +1619,8 @@ les DERNIÈRES valeurs de la même colonne pour le "big_df"'''
 					f.write(f"Shape of Dataframe    : {complete_df_shape}\n")
 					f.write(f"Shape of Df test      : {df_test_shape}\n")
 					f.write(f"Trade signal          : {trade_signal}\n")
-					f.write(f"Starting treatment    : {int(datetime.datetime.fromtimestamp(int(starting_treatment_time)))}\n")
-					f.write(f"Ending treatment      : {int(datetime.datetime.fromtimestamp(int(ending_treatment_time)))}\n")
+					f.write(f"Starting treatment    : {datetime.datetime.fromtimestamp(int(starting_treatment_time))}\n")
+					f.write(f"Ending treatment      : {datetime.datetime.fromtimestamp(int(ending_treatment_time))}\n")
 					f.write(f"Iteration time delta  : {iteration_treatment_time_taken} second(s)\n")
 					f.write(f"Prediction time delta : {prediction_time_taken} second(s)\n")
 					if trade_is_taken:
