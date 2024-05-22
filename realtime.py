@@ -1268,7 +1268,7 @@ class IqBot:
 		###________________
 		model_filepath = gdrive_path + models_filenames[pair.upper()]
 		print_style(f"\nModel filepath: {model_filepath}\n", color = IqBot.INFORMATIVE_COLOR)
-		model = load_model(model_filepath = model_filepath)
+		model = load_model(model_filepath)
 		# print_style('Model successfully loaded :', color = IqBot.GOOD_COLOR, bold = IqBot.BOLD)
 		# print(model)
 
