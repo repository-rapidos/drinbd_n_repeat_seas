@@ -3,16 +3,13 @@
 """
 DON'T FORGET:
 
-- 
+- SI LA BALANCE EST INFERIEURE OU EGALE A UNE CERTAINE VALEUR, IL NE FAUDRA PAS 
+	PRENDRE DE TRADE !!!
+	==> CETTE CERTAINE VALEUR DOIT ETRE UN PARAMETRE DE LA CLASS IQBOT.
 
+- SI LE AMOUNT EST < 1, ALORS 1 
 
-- Quand on a l'intention de faire du threading il faut songer a mettre de time.sleep ne serait-ce que 
-	de 0.1 second !!!
-
-- DELETE ALL PSEUDO CODES:
-		### <-----------------------------------------> ### enter
-		### <-----------------------------------------> ### exit
-
+- freqs_seasonal DOIT AVOIR UNE VALEUR PAR DEFAUT
 
 """
 
@@ -20,8 +17,6 @@ DON'T FORGET:
 
 """
 TO TEST:
-
-- TO TEST CODE WE WILL USE A MODEL WHICH TAKE TRADES RANDOMLY
 
 - ### CHECK IF GPU IS CONNECTED:
 
@@ -1238,28 +1233,31 @@ class IqBot:
 					print("\n")
 
 			for infos_filename in infos_filenames:
-				with open(gdrive_path + infos_filename, "r", encoding = "utf-8") as f:
-					data = f.readlines()
-				data = [d.strip() for d in data]
-				data = [d for d in data if d != ""]
-				last_value_in_info_file = data[-1]
-				if "Timestamp of last sending to firebase:" in last_value_in_info_file:
-					last_timestamp_info_files_sent = int(last_value_in_info_file.split(" ")[-1])
-					last_datetime_info_files_sent = datetime.datetime.fromtimestamp(last_timestamp_info_files_sent)
-					print_style(f"Le fichier a été envoyé sur Firebase Storage en cette datetime: {last_datetime_info_files_sent}", 
-									color = IqBot.INFORMATIVE_COLOR, bold = IqBot.BOLD)
+				try:
+					with open(gdrive_path + infos_filename, "r", encoding = "utf-8") as f:
+						data = f.readlines()
+					data = [d.strip() for d in data]
+					data = [d for d in data if d != ""]
+					last_value_in_info_file = data[-1]
+					if "Timestamp of last sending to firebase:" in last_value_in_info_file:
+						last_timestamp_info_files_sent = int(last_value_in_info_file.split(" ")[-1])
+						last_datetime_info_files_sent = datetime.datetime.fromtimestamp(last_timestamp_info_files_sent)
+						print_style(f"Le fichier a été envoyé sur Firebase Storage en cette datetime: {last_datetime_info_files_sent}", 
+										color = IqBot.INFORMATIVE_COLOR, bold = IqBot.BOLD)
 
-					time_elapsed_from_sent = time.time() - last_timestamp_info_files_sent
-					if time_elapsed_from_sent//60 > 5:
-						for _ in range(20):
-							print('Il y a plus de 5 minutes que les fichiers txt "Info files" ont été envoyé sur Firebase Storage',
-									color  = IqBot.ALERT_COLOR, bold = IqBot.BOLD)
-						time.sleep(waintings[2])
-				else:
-					for _ in range(10):
-						print_style(f"Vous re-éxecuter le code après une simple interruption de Google Colab.",
-							color = IqBot.INFORMATIVE_COLOR)
-					print("\n")
+						time_elapsed_from_sent = time.time() - last_timestamp_info_files_sent
+						if time_elapsed_from_sent//60 > 5:
+							for _ in range(20):
+								print('Il y a plus de 5 minutes que les fichiers txt "Info files" ont été envoyé sur Firebase Storage',
+										color  = IqBot.ALERT_COLOR, bold = IqBot.BOLD)
+							time.sleep(waintings[2])
+					else:
+						for _ in range(10):
+							print_style(f"Vous re-éxecuter le code après une simple interruption de Google Colab.",
+								color = IqBot.INFORMATIVE_COLOR)
+						print("\n")
+				except FileNotFoundError:
+					pass
 
 	def main(self, pair, risk_factor, expiration):
 		### DOWNLOAD MODEL FROM FIREBASE STORAGE:
