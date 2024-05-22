@@ -3,13 +3,8 @@
 """
 DON'T FORGET:
 
-- SI LA BALANCE EST INFERIEURE OU EGALE A UNE CERTAINE VALEUR, IL NE FAUDRA PAS 
-	PRENDRE DE TRADE !!!
-	==> CETTE CERTAINE VALEUR DOIT ETRE UN PARAMETRE DE LA CLASS IQBOT.
 
-- SI LE AMOUNT EST < 1, ALORS 1 
 
-- freqs_seasonal DOIT AVOIR UNE VALEUR PAR DEFAUT
 
 """
 
@@ -1145,12 +1140,13 @@ class IqBot:
 				waintings, 
 				candles_timeframe,
 				loop_window,
-				freqs_seasonal,
 				close_column_name,
 				verbose_predict,
 				trade_binary,
 				trade_digital,
 				take_simultaneous_trades_different_pairs,
+				minimal_balance_tradable,
+				freqs_seasonal = list(range(2, 40, 1)),
 				look_back = 15,
 				nbr_rows_get_seas = 19_999, 
 				nbrs_rows_train_part = 50_000,
@@ -1162,6 +1158,11 @@ class IqBot:
 		self.account = connect_2_iq_option_account(iq_email = iq_email, 
 									iq_password = iq_password, 
 									account_type = account_type)
+
+		### ASSERTS:
+		###_________
+		assert len(waintings) == 3, 'Il doit y avoir 3 valeurs dans la liste "waintings"'
+		assert len(loop_window) == 2, 'Il doit y avoir 2 valeurs dans la liste "loop_window"'
 
 		### INITIALIZE PARAMS:
 		###___________________
@@ -1177,11 +1178,8 @@ class IqBot:
 		self.take_simultaneous_trades_different_pairs = take_simultaneous_trades_different_pairs
 		self.trade_binary = trade_binary
 		self.trade_digital = trade_digital
-
-		### ASSERTS:
-		###_________
-		assert len(waintings) == 3, 'Il doit y avoir 3 valeurs dans la liste "waintings"'
-		assert len(loop_window) == 2, 'Il doit y avoir 2 valeurs dans la liste "loop_window"'
+		self.loop_window = loop_window
+		self.minimal_balance_tradable = minimal_balance_tradable
 
 		### WAIT TO BE CONNECTED TO GOOGLE DRIVE:
 		###______________________________________
@@ -1341,9 +1339,10 @@ sur Firebase Storage (le df utilisé lors de l\'entrainement du modèle).
 		###_______________
 		opened_binary_trades_ids = []
 		opened_digital_trades_ids = []
+		print_style("\nWe start the long loop ...\n", color = IqBot.INFORMATIVE_COLOR)
 		while True:
 			### RUN THE ITERATION ONLY ON THE BEGINNING OF A MINUTE:
-			if loop_window[0] <= datetime.datetime.now().second <= loop_window[1]:
+			if self.loop_window[0] <= datetime.datetime.now().second <= self.loop_window[1]:
 				trade_is_taken = False
 				starting_treatment_time = time.time()
 				### DOWNLOAD THE SMALL DF:
@@ -1533,34 +1532,36 @@ sur Firebase Storage (le df utilisé lors de l\'entrainement du modèle).
 				###______________________
 				if condition_trade_by_last_datetime and trade_signal != "neutral":
 					balance_before = self.account.get_balance()
-					amount = risk_factor * balance_before
 
-					if self.trade_binary and take_binary_trade_simult_condition:
-						### TAKE BINARY POSITION:
-						###______________________
-						check_binary, id_binary = self.binary.pass_order(
-							amount = amount, 
-							pair = pair, 
-							order_type = trade_signal, 
-							expiration = expiration,)
-						if check_binary:
-							trade_is_taken = True
-							opened_binary_trades_ids.append(id_binary)
+					if balance_before > self.minimal_balance_tradable:
+						amount = risk_factor * balance_before
+						amount = 1 if amount < 1 else amount
+						if self.trade_binary and take_binary_trade_simult_condition:
+							### TAKE BINARY POSITION:
+							###______________________
+							check_binary, id_binary = self.binary.pass_order(
+								amount = amount, 
+								pair = pair, 
+								order_type = trade_signal, 
+								expiration = expiration,)
+							if check_binary:
+								trade_is_taken = True
+								opened_binary_trades_ids.append(id_binary)
 
-					if self.trade_digital and take_digital_trade_simult_condition:
-						### TAKE DIGITAL POSITION:
-						###_______________________
-						check_digital, id_digital = self.digital.pass_order(
-							amount = amount, 
-							pair = pair, 
-							order_type = trade_signal, 
-							expiration = expiration,)
-						if check_digital:
-							trade_is_taken = True
-							opened_digital_trades_ids.append(id_digital)
+						if self.trade_digital and take_digital_trade_simult_condition:
+							### TAKE DIGITAL POSITION:
+							###_______________________
+							check_digital, id_digital = self.digital.pass_order(
+								amount = amount, 
+								pair = pair, 
+								order_type = trade_signal, 
+								expiration = expiration,)
+							if check_digital:
+								trade_is_taken = True
+								opened_digital_trades_ids.append(id_digital)
 
-					trades_taken_at_datetime = datetime.datetime.fromtimestamp(
-																			int(time.time()))
+						trades_taken_at_datetime = datetime.datetime.fromtimestamp(
+																	int(time.time()))
 
 				### PRINTINGS:
 				###___________
