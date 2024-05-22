@@ -1,32 +1,5 @@
 
 
-"""
-DON'T FORGET:
-
-
-
-
-"""
-
-
-
-"""
-TO TEST:
-
-- ### CHECK IF GPU IS CONNECTED: when we choosed tpu one or another
-
-- ### DOWNLOAD INFORMATION FILES IF NECESSARY:
-
-- the code in file: send_info_files.py
-
-"""
-
-
-
-
-
-
-
 ################ SECTION MAIN_VARIABLES:
 
 model_reference_cloud_path = "drinbd-n-repeat-seas/models-de-reference/"
