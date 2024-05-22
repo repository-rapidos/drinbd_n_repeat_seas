@@ -1359,6 +1359,9 @@ sur Firebase Storage (le df utilisé lors de l\'entrainement du modèle).
 				message_date_from_big_df_small_df_diff = '''La DERNIÈRE valeur de la colonne "date_from" de "big_df" doit être égale 
 à la PREMIÈRE valeur de la même colonne pour le "small_df" !'''
 
+				print("get_last_date_from_value(big_df)    :", get_last_date_from_value(big_df))
+				print("get_first_date_from_value(small_df) :", get_first_date_from_value(small_df))
+
 				assert get_last_date_from_value(big_df) == get_first_date_from_value(small_df), message_date_from_big_df_small_df_diff
 
 				# ### VERIFIER SI LE SMALL DF RESPECTE LA CONDITION DE PRISE DE TRADE:
