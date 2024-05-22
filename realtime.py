@@ -1305,6 +1305,12 @@ class IqBot:
 			last_value = values[-1]
 			return last_value
 
+		def get_last_date_from_values(df, nbr_values):
+			df = df.copy()
+			df = df.tail(nbr_values)
+			values = df['date_from'].tolist()
+			return values
+
 		def get_timestamp_from_datetime_as_str(str_datetime):
 			date = str_datetime.split(" ")[0]
 			time = str_datetime.split(" ")[1]
@@ -1359,16 +1365,17 @@ sur Firebase Storage (le df utilisé lors de l\'entrainement du modèle).
 											timeframe = self.candles_timeframe, 
 											nbr_candles = nbr_candles)
 
-				message_date_from_big_df_small_df_diff = '''La DERNIÈRE valeur de la colonne "date_from" de "big_df" doit être égale 
-à la PREMIÈRE valeur de la même colonne pour le "small_df" !'''
-
-				# print("get_last_date_from_value(big_df)    :", get_last_date_from_value(big_df))
-				# print("get_first_date_from_value(small_df) :", get_first_date_from_value(small_df))
+				message_date_from_big_df_small_df_diff = '''La PREMIÈRE valeur de la colonne "date_from" de "small_df" doit être parmi 
+les DERNIÈRES valeurs de la même colonne pour le "big_df"'''
 
 				print("Small df :")
 				print(small_df[['date_from', 'date_to', 'close']], "\n")
 
-				assert get_last_date_from_value(big_df) == get_first_date_from_value(small_df), message_date_from_big_df_small_df_diff
+				first_date_from_small_df = get_first_date_from_value(small_df)
+				last_date_from_values_big_df = get_last_date_from_values(
+													df = big_df, nbr_values = 5)
+
+				assert first_date_from_small_df in last_date_from_values_big_df, message_date_from_big_df_small_df_diff
 
 				# ### VERIFIER SI LE SMALL DF RESPECTE LA CONDITION DE PRISE DE TRADE:
 				condition_trade_by_last_datetime = False
@@ -1386,12 +1393,14 @@ sur Firebase Storage (le df utilisé lors de l\'entrainement du modèle).
 
 				### CREATE COMPLETE DF:
 				###____________________
-				### WE SHALL FIRST, DROP THE FIRST VALUE OF SMALL DF IN ORDER TO AVOID 
-				### TO REPEAT THE ROW IN THE COMPLETE DF:
-				small_df = small_df.tail(len(small_df)-1)
+				### WE SHALL DROP DUPLICATED ROWS ACCORDING TO "date_from" COLUMN:
 				complete_df = pd.concat([big_df, small_df], axis = 0)
+				complete_df.drop_duplicates('date_from', keep = 'last' , inplace = True)
 				complete_df.reset_index(inplace = True, drop = True)
 				complete_df_shape = complete_df.shape
+
+				print("Complete df :")
+				print(complete_df[['date_from', 'date_to', 'close']], "\n")
 
 				### ADD COLUMNS TO complete_df:
 				###____________________________
