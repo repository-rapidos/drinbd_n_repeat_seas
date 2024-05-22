@@ -486,7 +486,7 @@ def get_concerned_candles(df, start_timestamp):
 	# date_from_ = df['date_from'].tolist()[0]
 	# print(df, "\n")
 	# print("Type of date_from :", type(date_from_))
-	print("start_timestamp_  :", start_timestamp_)
+	# print("start_timestamp_  :", start_timestamp_)
 
 	from_index = list(df[df['date_from'] == start_timestamp_].index)
 	assert len(from_index) == 1, 'We should have only one index from "from_index = list(df[df[\'date_from\'] == start_timestamp_].index)"'
@@ -1329,6 +1329,9 @@ class IqBot:
 							start_timestamp = big_df_start_timestamp,
 							verbose = True)
 
+		print("Big Df :")
+		print(big_df[['date_from', 'date_to', 'close']], "\n")
+
 		msg_date_from_diff = '''La première valeur de la colonne "date_from" de "big_df" 
 (le df téléchargé maintenant) devrait être égale à celle de df enregistré 
 sur Firebase Storage (le df utilisé lors de l\'entrainement du modèle).
@@ -1359,8 +1362,11 @@ sur Firebase Storage (le df utilisé lors de l\'entrainement du modèle).
 				message_date_from_big_df_small_df_diff = '''La DERNIÈRE valeur de la colonne "date_from" de "big_df" doit être égale 
 à la PREMIÈRE valeur de la même colonne pour le "small_df" !'''
 
-				print("get_last_date_from_value(big_df)    :", get_last_date_from_value(big_df))
-				print("get_first_date_from_value(small_df) :", get_first_date_from_value(small_df))
+				# print("get_last_date_from_value(big_df)    :", get_last_date_from_value(big_df))
+				# print("get_first_date_from_value(small_df) :", get_first_date_from_value(small_df))
+
+				print("Small df :")
+				print(small_df[['date_from', 'date_to', 'close']], "\n")
 
 				assert get_last_date_from_value(big_df) == get_first_date_from_value(small_df), message_date_from_big_df_small_df_diff
 
