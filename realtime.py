@@ -1363,269 +1363,276 @@ les DERNIÈRES valeurs de la même colonne pour le "big_df"'''
 				 int(timestamp_last_date_from_of_small_df['minute']) == int(datetime.datetime.now().minute):
 					condition_trade_by_last_datetime = True
 
-				### CREATE COMPLETE DF:
-				###____________________
-				### WE SHALL DROP DUPLICATED ROWS ACCORDING TO "date_from" COLUMN:
-				complete_df = pd.concat([big_df, small_df], axis = 0)
-				complete_df.drop_duplicates('date_from', keep = 'last' , inplace = True)
-				complete_df.reset_index(inplace = True, drop = True)
-				complete_df_shape = complete_df.shape
-				# print("Complete df :")
-				# print(complete_df[['date_from', 'date_to', 'close']], "\n")
+				if condition_trade_by_last_datetime:
+					### CREATE COMPLETE DF:
+					###____________________
+					### WE SHALL DROP DUPLICATED ROWS ACCORDING TO "date_from" COLUMN:
+					complete_df = pd.concat([big_df, small_df], axis = 0)
+					complete_df.drop_duplicates('date_from', keep = 'last' , inplace = True)
+					### We must delete the last row of complete_df because it's the 
+					### instable candlestick that we have to predict:
+					complete_df.reset_index(inplace = True, drop = True)
+					complete_df = complete_df.head(complete_df.shape[0] - 1)
+					complete_df_shape = complete_df.shape
+					# print("Complete df :")
+					# print(complete_df[['date_from', 'date_to', 'close']], "\n")
 
-				### ADD COLUMNS TO complete_df:
-				###____________________________
+					### ADD COLUMNS TO complete_df:
+					###____________________________
 
-				### ADD SEASONALITY COLUMNS:
-				###_________________________
+					### ADD SEASONALITY COLUMNS:
+					###_________________________
 
-				for freq in self.freqs_seasonal:
-					complete_df = add_seas_column_to_df(df = complete_df, 
-										nbr_rows_get_seas = self.nbr_rows_get_seas, 
-										freq = freq, 
-										close_col_name = self.close_column_name)
+					for freq in self.freqs_seasonal:
+						complete_df = add_seas_column_to_df(df = complete_df, 
+											nbr_rows_get_seas = self.nbr_rows_get_seas, 
+											freq = freq, 
+											close_col_name = self.close_column_name)
 
-				### DELETE THE PART OF COMPLETE DF WHICH CONCERNS THE GETTING SEASONALITY:
-				complete_df = complete_df.tail(complete_df.shape[0] - self.nbr_rows_get_seas)
-				complete_df.reset_index(inplace = True, drop = True)
+					### DELETE THE PART OF COMPLETE DF WHICH CONCERNS THE GETTING SEASONALITY:
+					complete_df = complete_df.tail(complete_df.shape[0] - self.nbr_rows_get_seas)
+					complete_df.reset_index(inplace = True, drop = True)
 
-				### GET TEST PART/ DROP TRAIN PART:
-				###________________________________
-				df_test = complete_df.tail(complete_df.shape[0] - self.nbrs_rows_train_part)
-				df_test.reset_index(inplace = True, drop = True)
+					### GET TEST PART/ DROP TRAIN PART:
+					###________________________________
+					df_test = complete_df.tail(complete_df.shape[0] - self.nbrs_rows_train_part)
+					df_test.reset_index(inplace = True, drop = True)
 
-				### ADD WAVELETS COLUMNS AND STATIONNARIZED CLOSE:
-				###_______________________________________________
-				### ==> TEST DATA:
-				###_______________
-				df_test_wavelets_cols = add_wavelets_columns(
-												close_column = df_test[self.close_column_name])
-				df_test['dwt_cA'] = df_test_wavelets_cols['dwt_cA']
-				df_test['dwt_cD'] = df_test_wavelets_cols['dwt_cD']
-				df_test['dwt_cA_stationnarized'] = df_test_wavelets_cols['dwt_cA_stationnarized']
-				df_test['stationnarized_close'] = stationnarize_close_column(df = df_test,
-												close_column_name = self.close_column_name)
-				df_test_shape = df_test.shape
+					### ADD WAVELETS COLUMNS AND STATIONNARIZED CLOSE:
+					###_______________________________________________
+					### ==> TEST DATA:
+					###_______________
+					df_test_wavelets_cols = add_wavelets_columns(
+													close_column = df_test[self.close_column_name])
+					df_test['dwt_cA'] = df_test_wavelets_cols['dwt_cA']
+					df_test['dwt_cD'] = df_test_wavelets_cols['dwt_cD']
+					df_test['dwt_cA_stationnarized'] = df_test_wavelets_cols['dwt_cA_stationnarized']
+					df_test['stationnarized_close'] = stationnarize_close_column(df = df_test,
+													close_column_name = self.close_column_name)
+					df_test_shape = df_test.shape
 
-				### JUST TAKE CONCERNED COLUMNS :
-				###______________________________
-				data_cols_names_seasonality = [f'seasonality_{d}' for d in self.freqs_seasonal]
-				data_cols_names = ['close', 
-									'stationnarized_close',
-									# 'soft_0.5', 
-									# 'less_0.5', 
-									# 'soft_0.5_stationnarized',
-									'dwt_cA', 
-									'dwt_cD', 
-									'dwt_cA_stationnarized']
-				data_cols_names += data_cols_names_seasonality
-				df_test = df_test[data_cols_names]
-
-				### SCALE TEST DATA:
-				###_________________
-				df_test_scaled, _ = data_scaler(df = df_test)
-
-				### TEST:
-				###______
-				### HERE, WE NEED ONLY THE LAST FRAGMENT OF df_test_scaled (tail(look_back)):
-				df_test_scaled = df_test_scaled.tail(self.look_back)
-				df_test_scaled.reset_index(inplace = True, drop = True)
-
-				### ADD SIMULATED TARGET, JUST FOR COMPUTATION OF X AND Y:
-				df_test_scaled['simulated_target'] = 0.0
-				x_y_test = native_x_y_spliter(df = df_test_scaled, 
-											data_cols_names = data_cols_names, 
-											target_col_name = 'simulated_target', 
-											look_back = self.look_back)
-
-				last_X_test = x_y_test['dataX']
-				# #### y_test = x_y_test['dataY']
-
-				### USE THE MODEL TO MAKE A PREDICTION:
-				###____________________________________
-				prediction_start_time = time.time()
-				y_pred = model.predict(last_X_test, verbose = self.verbose_predict)
-				prediction_time_taken = round(time.time() - prediction_start_time, 3)
-				y_pred = [item[0] for item in y_pred]
-				assert len(y_pred) == 1, 'Il devrait y avoir une seule valeur "y_pred" !'
-				y_pred = float(y_pred[0])
-				assert isinstance(y_pred, float), 'La valeur de "y_pred" devrait être un nombre décimal !'
-
-				y_pred_rapprochmt = get_rapprochement(y_pred = y_pred)
-
-				if y_pred_rapprochmt == 0.0:
-					trade_signal = 'put'
-				elif y_pred_rapprochmt == 0.5:
-					trade_signal = 'neutral'
-				elif y_pred_rapprochmt == 1.0:
-					trade_signal = 'call'
-
-				if self.take_simultaneous_trades_different_pairs:
-					### CHECK OPENED / CLOSED TRADES:
+					### JUST TAKE CONCERNED COLUMNS :
 					###______________________________
-					### binary:
-					for opened_binary_trade_id in opened_binary_trades_ids:
-						binary_trade_closed = self.binary.trade_closed(
-														_id = opened_binary_trade_id)
-						if binary_trade_closed:
-							try:
-								opened_binary_trades_ids.remove(opened_binary_trade_id)
-							except ValueError:
-								pass
+					data_cols_names_seasonality = [f'seasonality_{d}' for d in self.freqs_seasonal]
+					data_cols_names = ['close', 
+										'stationnarized_close',
+										# 'soft_0.5', 
+										# 'less_0.5', 
+										# 'soft_0.5_stationnarized',
+										'dwt_cA', 
+										'dwt_cD', 
+										'dwt_cA_stationnarized']
+					data_cols_names += data_cols_names_seasonality
+					df_test = df_test[data_cols_names]
 
-					### digital:
-					for opened_digital_trade_id in opened_digital_trades_ids:
-						digital_trade_closed = self.digital.trade_closed(
-														_id = opened_digital_trade_id)
-						if digital_trade_closed:
-							try:
-								opened_digital_trades_ids.remove(opened_digital_trade_id)
-							except ValueError:
-								pass
+					### SCALE TEST DATA:
+					###_________________
+					df_test_scaled, _ = data_scaler(df = df_test)
 
-				### CONDITION ABOUT SIMULTANEOUS TRADES:
-				###_____________________________________
-				"""
-				# take_binary_trade_simult_condition = True
-				# take_digital_trade_simult_condition = True
-				# ### simultanéité autorisée ou pas, si opened_binary_trades_ids == 0
-				# ### on a le droit de prendre un nouveau trade binary
-				# if len(opened_binary_trades_ids) == 0:
-				# 	take_binary_trade_simult_condition = True
-				# ### simultanéité autorisée ou pas, si opened_binary_trades_ids == 0
-				# ### on a le droit de prendre un nouveau trade digital
-				# if len(opened_digital_trades_ids) == 0:
-				# 	take_digital_trade_simult_condition = True
-				# ### si simultanéité autorisée, on a le droit de prendre un trade
-				# ### qu'il y ait un/plusieurs autre(s) trade(s) ouvert(s) ou pas.
-				# if self.take_simultaneous_trades_different_pairs:
-				# 	take_binary_trade_simult_condition = True
-				# 	take_digital_trade_simult_condition = True
-				# ### si simultanéité non autorisée, on a pas le droit de prendre 
-				# ### un nouveau trade s'il y en a déjà un/plusieurs qui est/sont ouvert(s)
-				# else:
-				# 	if len(opened_binary_trades_ids) > 0:
-				# 		take_binary_trade_simult_condition = False
-				# 	if len(opened_digital_trades_ids) > 0:
-				# 		take_digital_trade_simult_condition = False
-				"""
+					### TEST:
+					###______
+					### HERE, WE NEED ONLY THE LAST FRAGMENT OF df_test_scaled (tail(look_back)):
+					df_test_scaled = df_test_scaled.tail(self.look_back)
+					df_test_scaled.reset_index(inplace = True, drop = True)
 
-				take_binary_trade_simult_condition = True
-				take_digital_trade_simult_condition = True
-				if not self.take_simultaneous_trades_different_pairs:
-					if len(opened_binary_trades_ids) > 0:
-						take_binary_trade_simult_condition = False
-					if len(opened_digital_trades_ids) > 0:
-						take_digital_trade_simult_condition = False					
+					### ADD SIMULATED TARGET, JUST FOR COMPUTATION OF X AND Y:
+					df_test_scaled['simulated_target'] = 0.0
+					x_y_test = native_x_y_spliter(df = df_test_scaled, 
+												data_cols_names = data_cols_names, 
+												target_col_name = 'simulated_target', 
+												look_back = self.look_back)
 
-				### TAKE A TRADE OR WAIT:
-				###______________________
-				if condition_trade_by_last_datetime and trade_signal != "neutral":
-					balance_before = self.account.get_balance()
+					last_X_test = x_y_test['dataX']
+					# #### y_test = x_y_test['dataY']
 
-					if balance_before > self.minimal_balance_tradable:
-						amount = risk_factor * balance_before
-						amount = 1 if amount < 1 else amount
-						if self.trade_binary and take_binary_trade_simult_condition:
-							### TAKE BINARY POSITION:
-							###______________________
-							check_binary, id_binary = self.binary.pass_order(
-								amount = amount, 
-								pair = pair, 
-								order_type = trade_signal, 
-								expiration = expiration,)
-							if check_binary:
-								trade_is_taken = True
-								opened_binary_trades_ids.append(id_binary)
+					### USE THE MODEL TO MAKE A PREDICTION:
+					###____________________________________
+					prediction_start_time = time.time()
+					y_pred = model.predict(last_X_test, verbose = self.verbose_predict)
+					prediction_time_taken = round(time.time() - prediction_start_time, 3)
+					y_pred = [item[0] for item in y_pred]
+					assert len(y_pred) == 1, 'Il devrait y avoir une seule valeur "y_pred" !'
+					y_pred = float(y_pred[0])
+					assert isinstance(y_pred, float), 'La valeur de "y_pred" devrait être un nombre décimal !'
 
-						if self.trade_digital and take_digital_trade_simult_condition:
-							### TAKE DIGITAL POSITION:
-							###_______________________
-							check_digital, id_digital = self.digital.pass_order(
-								amount = amount, 
-								pair = pair, 
-								order_type = trade_signal, 
-								expiration = expiration,)
-							if check_digital:
-								trade_is_taken = True
-								opened_digital_trades_ids.append(id_digital)
+					y_pred_rapprochmt = get_rapprochement(y_pred = y_pred)
 
-						trades_taken_at_datetime = datetime.datetime.fromtimestamp(
-																	int(time.time()))
+					if y_pred_rapprochmt == 0.0:
+						trade_signal = 'put'
+					elif y_pred_rapprochmt == 0.5:
+						trade_signal = 'neutral'
+					elif y_pred_rapprochmt == 1.0:
+						trade_signal = 'call'
 
-				### PRINTINGS:
-				###___________
+					if self.take_simultaneous_trades_different_pairs:
+						### CHECK OPENED / CLOSED TRADES:
+						###______________________________
+						### binary:
+						for opened_binary_trade_id in opened_binary_trades_ids:
+							binary_trade_closed = self.binary.trade_closed(
+															_id = opened_binary_trade_id)
+							if binary_trade_closed:
+								try:
+									opened_binary_trades_ids.remove(opened_binary_trade_id)
+								except ValueError:
+									pass
 
-				if trade_is_taken:
-					print_style(f"\nTrade is taken on : {pair}", color = IqBot.INFORMATIVE_COLOR)
-					print_style(f"Balance before      : {balance_before} $", color = IqBot.INFORMATIVE_COLOR)
-					print_style(f"Invested amount     : {amount} $", color = IqBot.INFORMATIVE_COLOR)
-					print_style(f"Datetime            : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
-				else:
-					print_style(f"\nNo trade taken on {pair}.", color = IqBot.INFORMATIVE_COLOR)
-					print_style(f"Datetime            : {datetime.datetime.fromtimestamp(int(time.time()))}", color = IqBot.INFORMATIVE_COLOR)
-				print_style(f"Trade signal        : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
+						### digital:
+						for opened_digital_trade_id in opened_digital_trades_ids:
+							digital_trade_closed = self.digital.trade_closed(
+															_id = opened_digital_trade_id)
+							if digital_trade_closed:
+								try:
+									opened_digital_trades_ids.remove(opened_digital_trade_id)
+								except ValueError:
+									pass
 
-				# try:
-				# 	if "Cannot purchase an option (active is suspended)" in str(id_binary):
-				# 		print_style(f"\nBinary trade not taken because: {pair} is suspended !", color = IqBot.INFORMATIVE_COLOR)
-				# 		print_style(f"Datetime                 : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
-				# 		print_style(f"Trade signal             : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
-				# except:
-				# 	pass
-				# try:
-				# 	if "invalid instrument" in str(id_digital):
-				# 		print_style(f"\nDigital trade not taken because: {pair} is suspended !", color = IqBot.INFORMATIVE_COLOR)
-				# 		print_style(f"Datetime                 : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
-				# 		print_style(f"Trade signal             : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
-				# except:
-				# 	pass
-				print("\n")
+					### CONDITION ABOUT SIMULTANEOUS TRADES:
+					###_____________________________________
+					"""
+					# take_binary_trade_simult_condition = True
+					# take_digital_trade_simult_condition = True
+					# ### simultanéité autorisée ou pas, si opened_binary_trades_ids == 0
+					# ### on a le droit de prendre un nouveau trade binary
+					# if len(opened_binary_trades_ids) == 0:
+					# 	take_binary_trade_simult_condition = True
+					# ### simultanéité autorisée ou pas, si opened_binary_trades_ids == 0
+					# ### on a le droit de prendre un nouveau trade digital
+					# if len(opened_digital_trades_ids) == 0:
+					# 	take_digital_trade_simult_condition = True
+					# ### si simultanéité autorisée, on a le droit de prendre un trade
+					# ### qu'il y ait un/plusieurs autre(s) trade(s) ouvert(s) ou pas.
+					# if self.take_simultaneous_trades_different_pairs:
+					# 	take_binary_trade_simult_condition = True
+					# 	take_digital_trade_simult_condition = True
+					# ### si simultanéité non autorisée, on a pas le droit de prendre 
+					# ### un nouveau trade s'il y en a déjà un/plusieurs qui est/sont ouvert(s)
+					# else:
+					# 	if len(opened_binary_trades_ids) > 0:
+					# 		take_binary_trade_simult_condition = False
+					# 	if len(opened_digital_trades_ids) > 0:
+					# 		take_digital_trade_simult_condition = False
+					"""
 
-				ending_treatment_time = time.time()
-				iteration_treatment_time_taken = round(ending_treatment_time - starting_treatment_time, 3)
+					take_binary_trade_simult_condition = True
+					take_digital_trade_simult_condition = True
+					if not self.take_simultaneous_trades_different_pairs:
+						if len(opened_binary_trades_ids) > 0:
+							take_binary_trade_simult_condition = False
+						if len(opened_digital_trades_ids) > 0:
+							take_digital_trade_simult_condition = False					
 
-				### SAVE INFORMATIONS:
-				###___________________
-				with open(gdrive_path + infos_filename, "a", encoding = "utf-8") as f:
-					f.write(f"Currency pair         : {pair}\n")
-					f.write(f"Shape of Dataframe    : {complete_df_shape}\n")
-					f.write(f"Shape of Df test      : {df_test_shape}\n")
-					f.write(f"Trade signal          : {trade_signal}\n")
-					f.write(f"Starting treatment    : {datetime.datetime.fromtimestamp(int(starting_treatment_time))}\n")
-					f.write(f"Ending treatment      : {datetime.datetime.fromtimestamp(int(ending_treatment_time))}\n")
-					f.write(f"Iteration time delta  : {iteration_treatment_time_taken} second(s)\n")
-					f.write(f"Prediction time delta : {prediction_time_taken} second(s)\n")
+					### TAKE A TRADE OR WAIT:
+					###______________________
+					# ### if condition_trade_by_last_datetime and trade_signal != "neutral":
+					if trade_signal != "neutral":
+						balance_before = self.account.get_balance()
+
+						if balance_before > self.minimal_balance_tradable:
+							amount = risk_factor * balance_before
+							amount = 1 if amount < 1 else amount
+							if self.trade_binary and take_binary_trade_simult_condition:
+								### TAKE BINARY POSITION:
+								###______________________
+								check_binary, id_binary = self.binary.pass_order(
+									amount = amount, 
+									pair = pair, 
+									order_type = trade_signal, 
+									expiration = expiration,)
+								if check_binary:
+									trade_is_taken = True
+									opened_binary_trades_ids.append(id_binary)
+
+							if self.trade_digital and take_digital_trade_simult_condition:
+								### TAKE DIGITAL POSITION:
+								###_______________________
+								check_digital, id_digital = self.digital.pass_order(
+									amount = amount, 
+									pair = pair, 
+									order_type = trade_signal, 
+									expiration = expiration,)
+								if check_digital:
+									trade_is_taken = True
+									opened_digital_trades_ids.append(id_digital)
+
+							trades_taken_at_datetime = datetime.datetime.fromtimestamp(
+																		int(time.time()))
+
+					### PRINTINGS:
+					###___________
+
 					if trade_is_taken:
-						f.write(f"Trade taken at        : {trades_taken_at_datetime}\n")
-						f.write(f"Risk factor           : {risk_factor}\n")
-						f.write(f"Balance before        : {balance_before} $\n")
-						f.write(f"Invested amount       : {amount} $\n")
+						print_style(f"\nTrade is taken on : {pair}", color = IqBot.INFORMATIVE_COLOR)
+						print_style(f"Balance before      : {balance_before} $", color = IqBot.INFORMATIVE_COLOR)
+						print_style(f"Invested amount     : {amount} $", color = IqBot.INFORMATIVE_COLOR)
+						print_style(f"Datetime            : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
+					else:
+						print_style(f"\nNo trade taken on {pair}.", color = IqBot.INFORMATIVE_COLOR)
+						print_style(f"Datetime            : {datetime.datetime.fromtimestamp(int(time.time()))}", color = IqBot.INFORMATIVE_COLOR)
+					print_style(f"The y_pred          : {y_pred}", color = IqBot.INFORMATIVE_COLOR)
+					print_style(f"Trade signal        : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
 
-						try:
-							f.write(f"Check Binary      : {check_binary}\n")
-						except:
-							pass
-						try:
-							f.write(f"Id Binary order   : {id_binary}\n")
-						except:
-							pass
-						try:
-							f.write(f"Check Digital      : {check_digital}\n")
-						except:
-							pass
-						try:
-							f.write(f"Id Digital order   : {id_digital}\n")
-						except:
-							pass
-					f.write("\n")
+					# try:
+					# 	if "Cannot purchase an option (active is suspended)" in str(id_binary):
+					# 		print_style(f"\nBinary trade not taken because: {pair} is suspended !", color = IqBot.INFORMATIVE_COLOR)
+					# 		print_style(f"Datetime                 : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
+					# 		print_style(f"Trade signal             : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
+					# except:
+					# 	pass
+					# try:
+					# 	if "invalid instrument" in str(id_digital):
+					# 		print_style(f"\nDigital trade not taken because: {pair} is suspended !", color = IqBot.INFORMATIVE_COLOR)
+					# 		print_style(f"Datetime                 : {trades_taken_at_datetime}", color = IqBot.INFORMATIVE_COLOR)
+					# 		print_style(f"Trade signal             : {trade_signal.upper()}", color = IqBot.INFORMATIVE_COLOR)
+					# except:
+					# 	pass
+					print("\n")
 
-				### WAIT FOR THE NEXT MINUTE:
-				###__________________________
-				datetime_now = datetime.datetime.fromtimestamp(int(time.time()))
-				print_style(f"\nThe Currency Pair {pair} is waiting for the next minute.", 
-					color = IqBot.INFORMATIVE_COLOR)
-				print_style(f"Datetime now : {datetime_now}\n",
-					color = IqBot.INFORMATIVE_COLOR)
-				time.sleep((60 - datetime_now.second) - 5)
+					ending_treatment_time = time.time()
+					iteration_treatment_time_taken = round(ending_treatment_time - starting_treatment_time, 3)
+
+					### SAVE INFORMATIONS:
+					###___________________
+					with open(gdrive_path + infos_filename, "a", encoding = "utf-8") as f:
+						f.write(f"Currency pair         : {pair}\n")
+						f.write(f"Shape of Dataframe    : {complete_df_shape}\n")
+						f.write(f"Shape of Df test      : {df_test_shape}\n")
+						f.write(f"Trade signal          : {trade_signal}\n")
+						f.write(f"Starting treatment    : {datetime.datetime.fromtimestamp(int(starting_treatment_time))}\n")
+						f.write(f"Ending treatment      : {datetime.datetime.fromtimestamp(int(ending_treatment_time))}\n")
+						f.write(f"Iteration time delta  : {iteration_treatment_time_taken} second(s)\n")
+						f.write(f"Prediction time delta : {prediction_time_taken} second(s)\n")
+						f.write(f"The y_pred            : {y_pred}\n")
+						if trade_is_taken:
+							f.write(f"Trade taken at        : {trades_taken_at_datetime}\n")
+							f.write(f"Risk factor           : {risk_factor}\n")
+							f.write(f"Balance before        : {balance_before} $\n")
+							f.write(f"Invested amount       : {amount} $\n")
+
+							try:
+								f.write(f"Check Binary      : {check_binary}\n")
+							except:
+								pass
+							try:
+								f.write(f"Id Binary order   : {id_binary}\n")
+							except:
+								pass
+							try:
+								f.write(f"Check Digital      : {check_digital}\n")
+							except:
+								pass
+							try:
+								f.write(f"Id Digital order   : {id_digital}\n")
+							except:
+								pass
+						f.write("\n")
+
+					### WAIT FOR THE NEXT MINUTE:
+					###__________________________
+					datetime_now = datetime.datetime.fromtimestamp(int(time.time()))
+					print_style(f"\nThe Currency Pair {pair} is waiting for the next minute.", 
+						color = IqBot.INFORMATIVE_COLOR)
+					print_style(f"Datetime now : {datetime_now}\n",
+						color = IqBot.INFORMATIVE_COLOR)
+					time.sleep((60 - datetime_now.second) - 5)
 
