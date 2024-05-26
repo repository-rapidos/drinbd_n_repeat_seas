@@ -1560,6 +1560,7 @@ les DERNIÈRES valeurs de la même colonne pour le "big_df"'''
 
 					### PRINTINGS:
 					###___________
+					"""
 
 					if trade_is_taken:
 						print_style(f"\nTrade is taken on : {pair}", color = IqBot.INFORMATIVE_COLOR)
@@ -1587,6 +1588,9 @@ les DERNIÈRES valeurs de la même colonne pour le "big_df"'''
 					# except:
 					# 	pass
 					print("\n")
+					"""
+					datetime_print = datetime.datetime.fromtimestamp(int(time.time()))
+					print_style(f"Running ... | {datetime_print}", color = IqBot.INFORMATIVE_COLOR)
 
 					ending_treatment_time = time.time()
 					iteration_treatment_time_taken = round(ending_treatment_time - starting_treatment_time, 3)
