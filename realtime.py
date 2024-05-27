@@ -382,7 +382,7 @@ class Digital:
 		return check, _id
 
 	def get_history(self, nbr_data):
-		data = account.get_position_history_v2(instrument_type = "digital-option",
+		data = self.account.get_position_history_v2(instrument_type = "digital-option",
 								limit = nbr_data, offset = 0, start = 0, end = 0)
 		history_node = data[1]['positions']
 		return {"all_data":data, "history_node":history_node}
