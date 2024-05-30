@@ -1077,7 +1077,8 @@ def add_seas_column_to_df(df, size_get_seas, freq, close_col_name,
 
 	df = df.copy()
 
-	len_df_get_seas = int(df.shape[0]*size_get_seas)
+	# len_df_get_seas = int(df.shape[0]*size_get_seas)
+	len_df_get_seas = 19_999
 	df_get_seas = df.head(len_df_get_seas)
 
 	# print("df_get_seas :", df_get_seas.shape[0])
@@ -1521,7 +1522,7 @@ def manage(test_nbr,
 	
 	for freq in freqs_seasonal:
 		df = add_seas_column_to_df(df = df, 
-							size_get_seas = 19_999, 
+							size_get_seas = 0.0, 
 							freq = freq, 
 							close_col_name = close_column_name)
 
