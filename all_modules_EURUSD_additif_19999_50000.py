@@ -1521,7 +1521,7 @@ def manage(test_nbr,
 	
 	for freq in freqs_seasonal:
 		df = add_seas_column_to_df(df = df, 
-							size_get_seas = size_get_seas, 
+							size_get_seas = 19_999, 
 							freq = freq, 
 							close_col_name = close_column_name)
 
