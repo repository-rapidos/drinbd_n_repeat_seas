@@ -475,7 +475,7 @@ def data_scaler(df):
 	return dataset, scaler
 
 
-def manual_scaler(df, min_2_add = -1.1, max_2_divid = 1.6):
+def manual_scaler(df, min_2_add = -2.0, max_2_divid = 3.0):
 	df = df.copy()
 	value_2_add = abs(min_2_add)
 	divisor = max_2_divid + value_2_add
@@ -1434,6 +1434,18 @@ def manage(test_nbr,
 	# print("max in test  :", max_in_test)
 
 	# time.sleep(10000)
+	
+
+	>>> output:
+
+	min in train : -1.0
+	max in train : 1.5548076036764165
+
+	min in test  : -1.0
+	max in test  : 1.5523786918830407
+
+	______________________________________
+
 	"""
 
 	# df_train_scaled, df_train_scaled_scaler = data_scaler(df = df_train)
