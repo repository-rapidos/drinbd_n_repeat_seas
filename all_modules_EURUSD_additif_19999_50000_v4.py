@@ -1747,31 +1747,31 @@ def manage(test_nbr,
 					df_tail = df_tail_balance_sheet,
 					save_to = gdrive_folder_path + balance_sheet_filename)
 
-	### UPLOAD RESULT FILES:
-	###_____________________
-	result_filenames = [
-		balance_sheet_filename,
-		df_results_filename,
-		# f'prev_epochs_test_nbr_{test_nbr}.txt',
-		f'model_test_nbr_{test_nbr}.h5',
-		# f'history_test_nbr_{test_nbr}.pkl',
-		# f'log_fitting_test_nbr_{test_nbr}.txt',
-	]
+	# ### UPLOAD RESULT FILES:
+	# ###_____________________
+	# result_filenames = [
+	# 	balance_sheet_filename,
+	# 	df_results_filename,
+	# 	# f'prev_epochs_test_nbr_{test_nbr}.txt',
+	# 	f'model_test_nbr_{test_nbr}.h5',
+	# 	# f'history_test_nbr_{test_nbr}.pkl',
+	# 	# f'log_fitting_test_nbr_{test_nbr}.txt',
+	# ]
 
-	print("\n")
-	for result_filename in result_filenames:
-		result_upload = direct_upload_file(
-			local_file_path_name = gdrive_folder_path + result_filename, 
-			cloud_file_path_name = results_cloud_path + result_filename,
-			)
+	# print("\n")
+	# for result_filename in result_filenames:
+	# 	result_upload = direct_upload_file(
+	# 		local_file_path_name = gdrive_folder_path + result_filename, 
+	# 		cloud_file_path_name = results_cloud_path + result_filename,
+	# 		)
 
-		if result_upload:
-			print_style(f"Successfully upload result file: {result_filename}:\n\t{result_upload}",
-				color = good_color, bold = bold)
-		else:
-			print_style(f"\nResult file {result_filename} wasn't uploaded !!!\n",
-				color = alert_color, bold = bold)
-	print("\n")
+	# 	if result_upload:
+	# 		print_style(f"Successfully upload result file: {result_filename}:\n\t{result_upload}",
+	# 			color = good_color, bold = bold)
+	# 	else:
+	# 		print_style(f"\nResult file {result_filename} wasn't uploaded !!!\n",
+	# 			color = alert_color, bold = bold)
+	# print("\n")
 
 	### SIGNAL THE ENDING OF CODE:
 	###___________________________
