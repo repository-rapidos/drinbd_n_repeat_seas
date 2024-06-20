@@ -1788,22 +1788,24 @@ def manage(test_nbr,
 	assert total_length_initial_df == (len_df_get_seas + target_shift + len_intermediate + len_train + len_test), \
 	"total_length_initial_df == (len_df_get_seas + target_shift + len_intermediate + len_train + len_test)"
 
-	print_style("____________________________________", color = informative_color)
-	print_style("___________________________", color = informative_color)
-	print_style("___________________", color = informative_color)
+	print_style("________________________________________________________", color = informative_color)
+	print_style("____________________________________________________", color = informative_color)
+	print_style("________________________________________________", color = informative_color)
 	print_style(f"Shape of df_train : {df_train.shape}", color = informative_color)
 	print_style(f"Shape of df_test  : {df_test.shape}\n", color = informative_color)
-	print_style('______________________________________________________________\n')
-	print_style(f'Length of data getting seasonnality		: {len_df_get_seas}', color = informative_color)
-	print_style(f'The target shift 				: {target_shift}', color = informative_color)
-	print_style(f'Length of intermediate data			: {len_intermediate}', color = informative_color)
-	print_style(f'Length of train dataframe 			: {len_train}', color = informative_color)
-	print_style(f'Length of test dataframe 			: {len_test}', color = informative_color)
-	print_style(f'Total Length					: {total_length_initial_df}\n', 
+	print_style('_______________', color = informative_color)
+	print_style('_______________', color = informative_color)
+	print_style('_______________\n', color = informative_color)
+	print_style(f'Length of data getting seasonnality	: {len_df_get_seas}', color = informative_color)
+	print_style(f'The target shift 			: {target_shift}', color = informative_color)
+	print_style(f'Length of intermediate data		: {len_intermediate}', color = informative_color)
+	print_style(f'Length of train dataframe 		: {len_train}', color = informative_color)
+	print_style(f'Length of test dataframe 		: {len_test}', color = informative_color)
+	print_style(f'Total Length				: {total_length_initial_df}\n', 
 													color = good_color, bold = bold)
-	print_style("___________________", color = informative_color)
-	print_style("___________________________", color = informative_color)
-	print_style("____________________________________\n", color = informative_color)
+	print_style("________________________________________________", color = informative_color)
+	print_style("____________________________________________________", color = informative_color)
+	print_style("________________________________________________________\n", color = informative_color)
 
 	### 3/3. ADD WAVELETS COLUMNS AND STATIONNARIZED CLOSE:
 	###____________________________________________________
@@ -1974,6 +1976,15 @@ def manage(test_nbr,
 		trues = comparison.count(True)
 		falses = comparison.count(False)
 		assert falses == 0, "falses == 0"
+		if falses == 0:
+			print_style("\n__________________________________________________________________", color = good_color, bold = bold)
+			print_style("______________________________________________________________", color = good_color, bold = bold)
+			print_style("__________________________________________________________\n", color = good_color, bold = bold)
+			print_style("Sense of Scaled Close is identic to Sens of Unscaled Close",
+						color = good_color, bold = bold)
+			print_style("__________________________________________________________", color = good_color, bold = bold)
+			print_style("______________________________________________________________", color = good_color, bold = bold)
+			print_style("__________________________________________________________________\n", color = good_color, bold = bold)
 
 	df_scaled_close = df_x_test[[close_column_name]]
 	df_unscaled_close = reference_date_open_close[[close_column_name]]
