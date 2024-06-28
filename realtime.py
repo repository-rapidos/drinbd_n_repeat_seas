@@ -1,7 +1,7 @@
 
 """
 Ce code est basé sur celui du fichier:
-	5.drinbd-n-repeat-seas/performing_3/all_modules_perf_3.py
+	5.drinbd-n-repeat-seas/performing_3/backtest_2_realtime_simul.py
 
 """
 
@@ -1344,6 +1344,7 @@ def timestamp_converter(x):
 	heure = datetime.datetime.fromtimestamp(x).strftime("%Y-%m-%d %H:%M:%S")
 	return heure
 
+
 def get_multi(start_timestamp):
 	assert isinstance(start_timestamp, dict), 'start_timestamp must be a "dict."'
 	# timestamp = datetime.datetime(year_, month_, day_, hour_, min_, sec_).timestamp()
@@ -1659,7 +1660,7 @@ def manage(test_nbr,
 		# 	"second":0,
 		# }
 
-		# df = get_big_data_candles(account = account, 
+		# ####### df = get_big_data_candles(account = account, 
 		# 					pair = "EURUSD", 
 		# 					timeframe = 60, 
 		# 					start_timestamp = start_timestamp, 
@@ -1725,7 +1726,7 @@ def manage(test_nbr,
 
 		### GET DATAFRAME TO USE IN THE CONTINUATION OF THE CODE:
 		###______________________________________________________
-		# #### df = total_df_instable_last_close.copy()
+		# ### df = total_df_instable_last_close.copy()
 		df = df_2_save_stable_last_close.copy()
 
 	elif check_environment() == 'Local_PC':
@@ -1749,24 +1750,27 @@ def manage(test_nbr,
 	### FRAGMENT LENGTH OF DF ACCORDING TO CONDITIONS AND RESET ITS INDEX:
 	###___________________________________________________________________
 	df = df[['date_from', 'date_to', 'open', 'high', 'low', 'close']]
-	if df_head is not None:
-		df = df.head(df_head)
-	if df_tail is not None:
-		df = df.tail(df_tail)
-	if slice_df_index is not None:
-		df = df.iloc[slice_df_index[0]: slice_df_index[1], :]
-	df.reset_index(inplace = True, drop = True)
-	total_length_initial_df = df.shape[0]
+	# if df_head is not None:
+	# 	df = df.head(df_head)
+	# if df_tail is not None:
+	# 	df = df.tail(df_tail)
+	# if slice_df_index is not None:
+	# 	df = df.iloc[slice_df_index[0]: slice_df_index[1], :]
+	# df.reset_index(inplace = True, drop = True)
+	# total_length_initial_df = df.shape[0]
 
 	long_df = df.copy()
 	del df ## we delete this df because we will create the new one on each iteration
 			## within the following loop. And for that we will need the "long_df"
 
-	simulating_realtime_path = f"/content/drive/MyDrive/shortcut_simulating_realtime_{test_nbr}_trial_nbr_{trial_nbr}/"	
+	simulating_realtime_path = f"/content/drive/MyDrive/shortcut_right_realtime_{test_nbr}_trial_nbr_{trial_nbr}/"	
 	try:
 		os.mkdir(simulating_realtime_path)
 	except:
 		pass
+
+	y_preds = []
+	all_iteration_time_delta = []
 
 	### DOWNLOAD THE MODEL:
 	###____________________
@@ -1785,379 +1789,436 @@ def manage(test_nbr,
 	model = load_the_model(gdrive_folder_path = gdrive_folder_path, 
 									test_nbr = test_nbr)
 
-	y_preds = []
-	all_iteration_time_delta = []
-	for step in range(1, steps+1):
-		print_style(f"\nStep {step}/{steps}", color = informative_color)
-
+	step = 1
+	#################################
+	# ### for step in range(1, steps+1):
+	while True:
 		start_iteration = time.time()
 		### GET DF STEP:
 		###_____________
 		# right_step = step
-		rev_step = steps - step
-		df = long_df.head(long_df.shape[0] - rev_step)
+		# rev_step = steps - step
+		# ##### df = long_df.head(long_df.shape[0] - rev_step)
 
-		# print_style("\nAvant le add_target, La dernière ligne de df est celle du close instable que nous cherchons à prédire.\n",
-		# 				color = informative_color)
+		last_date_from = long_df.tail(1)['date_from'].tolist()[0]
 
-		### ADD TARGET:
-		###____________
-		df = add_target_v2(df = df,
-					close_column_name = close_column_name, 
-					target_type = target_type,
-					target_shift = target_shift,
-					ratio_true_trend = ratio_true_trend)
+		### GET THE LAST DATE_FROM OF BIG_DF:
+		date_ = last_date_from.split(" ")[0]
+		time_ = last_date_from.split(" ")[1]
+		new_start_timestamp = {
+			"year":int(date_.split("-")[0]),
+			"month":int(date_.split("-")[1]),
+			"day":int(date_.split("-")[2]),
+			"hour":int(time_.split(":")[0]),
+			"minute":int(time_.split(":")[1]),
+			"second":int(time_.split(":")[2]),
+		}
 
-		# print_style("Nous venons de faire un add_target au df; donc la ligne du close instable vient d'être supprimée.\n",
-		# 				color = informative_color)
+		small_df = get_big_data_candles(account = account, 
+							pair = "EURUSD", 
+							timeframe = 60, 
+							start_timestamp = new_start_timestamp, 
+							verbose = False)
 
-		### HANDLE COLUMNS AND SPLIT TRAIN AND TEST:
-		###_________________________________________
-		
-		### 1/3. ADD SEASONALITY COLUMNS:
-		###______________________________
-		for freq in freqs_seasonal:
-			df = add_seas_column_to_df(df = df, 
-								len_df_get_seas = len_df_get_seas, 
-								freq = freq, 
-								close_col_name = close_column_name)
+		datetime_now = datetime.datetime.now()
+		if int(small_df.tail(1)['date_from'].tolist()[0].split(" ")[1].split(":")[1]) ==\
+		 int(datetime_now.minute) and datetime_now.second <= 7:
+			print_style(f"\nStep {step}/{steps}", color = informative_color)
+			small_df = small_df[long_df.columns.tolist()]
+			assert long_df.tail(1)['date_from'].tolist()[0] == small_df.head(1)['date_from'].tolist()[0], "long_df.tail(1)['date_from'].tolist()[0] == small_df.head(1)['date_from'].tolist()[0]"
 
-		### 2/3. SPLIT DATA:
-		###_________________
-		### DELETE THE PART OF DF WHICH CONCERNS THE GETTING SEASONALITY:
-		###______________________________________________________________
-		df = df.tail(df.shape[0] - len_df_get_seas)
-		df.reset_index(inplace = True, drop = True)
+			### DELETE THE FIRST ROW OF SMALL DF IN ORDER NOT TO DUPLICATE IT IN THE COMPLETE DF:
+			###__________________________________________________________________________________
+			small_df = small_df.tail(small_df.shape[0] - 1)
+			small_df.reset_index(inplace = True, drop = True)
+			complete_df = pd.concat([long_df, small_df], axis = 0)
+			complete_df.reset_index(inplace = True, drop = True)
+			assert long_df.shape[0] + small_df.shape[0] == complete_df.shape[0], "small_df.shape[0] + long_df.shape[0] == complete_df.shape[0]"
+			assert long_df.columns.tolist() == complete_df.columns.tolist(), "long_df.columns.tolist() == complete_df.columns.tolist()"
 
-		### DELETE THE INTERMEDIATE DATA:
-		###______________________________
-		df = df.tail(df.shape[0] - len_intermediate)
-		df.reset_index(inplace = True, drop = True)
+			# print_style("\nAvant le add_target, La dernière ligne de df est celle du close instable que nous cherchons à prédire.\n",
+			# 				color = informative_color)
 
-		### SPLIT TRAIN AND TEST:
-		###______________________
-		# df_train = df.head(len_train)
-		df_test = df.tail(df.shape[0] - len_train)
-		# df_train.reset_index(inplace = True, drop = True)
-		df_test.reset_index(inplace = True, drop = True)
-		len_test = df_test.shape[0]
+			### ADD TARGET:
+			###____________
+			# ####### df = add_target_v2(df = df,
+			# 			close_column_name = close_column_name, 
+			# 			target_type = target_type,
+			# 			target_shift = target_shift,
+			# 			ratio_true_trend = ratio_true_trend)
 
-		# assert total_length_initial_df == (len_df_get_seas + target_shift + len_intermediate + len_train + len_test), \
-		# "total_length_initial_df == (len_df_get_seas + target_shift + len_intermediate + len_train + len_test)"
+			if step == steps:
+				complete_df_length = complete_df.shape[0]
+			complete_df['target'] = 0.0
+			df = complete_df.head(complete_df.shape[0] - 1)
 
-		# print_style("________________________________________________________", color = informative_color)
-		# print_style("____________________________________________________", color = informative_color)
-		# print_style("________________________________________________", color = informative_color)
-		# print_style(f"Shape of df_train : {df_train.shape}", color = informative_color)
-		# print_style(f"Shape of df_test  : {df_test.shape}\n", color = informative_color)
-		# print_style('_______________', color = informative_color)
-		# print_style('_______________', color = informative_color)
-		# print_style('_______________\n', color = informative_color)
-		# print_style(f'Length of data getting seasonnality	: {len_df_get_seas}', color = informative_color)
-		# print_style(f'The target shift 			: {target_shift}', color = informative_color)
-		# print_style(f'Length of intermediate data		: {len_intermediate}', color = informative_color)
-		# print_style(f'Length of train dataframe 		: {len_train}', color = informative_color)
-		# print_style(f'Length of test dataframe 		: {len_test}', color = informative_color)
-		# print_style(f'Total Length				: {total_length_initial_df}\n', 
-		# 												color = good_color, bold = bold)
-		# print_style("________________________________________________", color = informative_color)
-		# print_style("____________________________________________________", color = informative_color)
-		# print_style("________________________________________________________\n", color = informative_color)
+			# print_style("Nous venons de faire un add_target au df; donc la ligne du close instable vient d'être supprimée.\n",
+			# 				color = informative_color)
 
-		### 3/3. ADD WAVELETS COLUMNS AND STATIONNARIZED CLOSE:
-		###____________________________________________________
-
-		# ### TRAIN DATA:
-		# ###____________
-		# df_train_wavelets_cols = add_wavelets_columns(close_column = df_train[close_column_name])
-		# df_train['dwt_cA'] = df_train_wavelets_cols['dwt_cA']
-		# df_train['dwt_cD'] = df_train_wavelets_cols['dwt_cD']
-		# df_train['dwt_cA_stationnarized'] = df_train_wavelets_cols['dwt_cA_stationnarized']
-		# df_train['stationnarized_close'] = stationnarize_close_column(df = df_train, 
-		# 											close_column_name = close_column_name)
-
-		### TEST DATA:
-		###___________
-		df_test_wavelets_cols = add_wavelets_columns(close_column = df_test[close_column_name])
-		df_test['dwt_cA'] = df_test_wavelets_cols['dwt_cA']
-		df_test['dwt_cD'] = df_test_wavelets_cols['dwt_cD']
-		df_test['dwt_cA_stationnarized'] = df_test_wavelets_cols['dwt_cA_stationnarized']
-		df_test['stationnarized_close'] = stationnarize_close_column(df = df_test,
-													close_column_name = close_column_name)
-
-		# print_style("DF TRAIN:", color = informative_color)
-		# print_style("_________\n", color = informative_color)
-		# print(df_train[['date_from', 'date_to', 'open', 'close']], "\n")
-		# print_style(f"df_train columns : {df_train.columns.tolist()}\n", 
-		# 			color = informative_color)
-
-		# print_style("DF TEST  :", color = informative_color)
-		# print_style("_________\n", color = informative_color)
-		# print(df_test[['date_from', 'date_to', 'open', 'close']], "\n")
-		# print_style(f"df_test columns : {df_test.columns.tolist()}", 
-		# 			color = informative_color)
-		# print("\n")
-
-		if step == steps:
-			reference_date_open_close = df_test[['date_from', 'date_to', 'open', 'close']]
-			# reference_date_open_close.reset_index(inplace = True, drop = True)
-			# reference_date_open_close = reference_date_open_close.tail(
-			# 	reference_date_open_close.shape[0] - (look_back - 1)
-			# 	)
-			reference_date_open_close = reference_date_open_close.tail(look_back + steps)
-			reference_date_open_close.reset_index(inplace = True, drop = True)
-
-		### SCALE TRAIN AND TEST DATA:
-		###___________________________
-
-		### SET DATA COLUMNS NAMES:
-		###________________________
-		data_cols_names_seasonality = [f'seasonality_{d}' for d in freqs_seasonal]
-		data_cols_names = ['close', 
-							'stationnarized_close',
-							# 'soft_0.5', 
-							# 'less_0.5', 
-							# 'soft_0.5_stationnarized',
-							'dwt_cA', 
-							'dwt_cD', 
-							'dwt_cA_stationnarized']
-		data_cols_names += data_cols_names_seasonality
-
-		# ### TRAIN DATA:
-		# ###____________
-		# df_train = df_train[data_cols_names + ['target']]
-		# df_train_scaled, df_train_scaled_scaler = data_scaler(df = df_train)
-
-		### TEST DATA:
-		###___________
-		df_test = df_test[data_cols_names + ['target']]
-		df_test_scaled, df_test_scaled_scaler = data_scaler(df = df_test)
-
-		### SPLIT X AND Y:
-		###_______________
-
-		# ### TRAIN:
-		# ###_______
-		# x_y_train = native_x_y_spliter(df = df_train_scaled, 
-		# 							data_cols_names = data_cols_names, 
-		# 							target_col_name = target_col_name, 
-		# 							look_back = look_back)
-
-		# X_train = x_y_train['dataX']
-		# y_train = x_y_train['dataY']
-
-		### TEST:
-		###______
-		if step == steps:
-			complete_df_test_scaled = df_test_scaled.copy()
-			complete_df_test_scaled = complete_df_test_scaled.tail(2*look_back + steps - 1)
-			complete_df_test_scaled.reset_index(inplace = True, drop = True)
-
-		df_test_scaled = df_test_scaled.tail(look_back)
-		df_test_scaled.reset_index(inplace = True, drop = True)
-		x_y_test = native_x_y_spliter(df = df_test_scaled, 
-									data_cols_names = data_cols_names, 
-									target_col_name = target_col_name, 
-									look_back = look_back)
-
-		if step == steps:
-			print_style("Please wait, Getting long X_test !!!", color = informative_color)
-			x_y_test_long = native_x_y_spliter(df = complete_df_test_scaled, 
-											data_cols_names = data_cols_names, 
-											target_col_name = target_col_name, 
-											look_back = look_back)
-			X_test_long = x_y_test_long['dataX']
-
-		X_test = x_y_test['dataX']
-		assert len(X_test) == 1, "len(X_test) == 1"
-		# ### y_test = x_y_test['dataY']
-
-		# print("\n")
-		# # print_style(f"Shape of X_train :{X_train.shape}", color = informative_color)
-		# # print_style(f"Shape of y_train :{y_train.shape}", color = informative_color)
-		# print_style(f"Shape of X_test  :{X_test.shape}", color = informative_color)
-		# print("\n")
-
-		# ### DOWNLOAD LANDMARKS ABOUT FITTING:
-		# ###__________________________________
-
-		# ######### if step == 1:
-		# 	############ filenames_landmarks = [
-		# 				f'prev_epochs_test_nbr_{test_nbr}.txt',
-		# 				f'model_test_nbr_{test_nbr}.h5',
-		# 				f'history_test_nbr_{test_nbr}.pkl',
-		# 				f'log_fitting_test_nbr_{test_nbr}.txt'
-		# 				]
-
-		# 	# print("\n")
-		# 	######### for filename_landmark in filenames_landmarks:
-		# 		if not check_file_exists(gdrive_folder_path + filename_landmark):
-		# 			result_downloading = direct_download_file(
-		# 				cloud_file_path_name = landmarks_cloud_path + filename_landmark, 
-		# 				local_file_path_name = gdrive_folder_path + filename_landmark)
-
-		# 			if result_downloading:
-		# 				print_style(f"Successfully downloaded {filename_landmark}", 
-		# 					color = good_color, bold = bold)
-		# 			else:
-		# 				print_style(f"File not downloaded: {filename_landmark}",
-		# 					color = alert_color, bold = bold)
-		# 	# print("\n")
-
-		# ### DOWNLOAD THE MODEL:
-		# ###____________________
-		# if step == 1:
-		# 	model_filename = f'model_test_nbr_{test_nbr}.h5'
-		# 	result_download_model = direct_download_file(
-		# 		cloud_file_path_name = results_cloud_path + model_filename, 
-		# 		local_file_path_name = gdrive_folder_path + model_filename,
-		# 		)
-		# 	if result_download_model:
-		# 		print_style("Model successfully downloaded !!!", color = good_color, bold = bold)
-		# 	elif not result_download_model:
-		# 		print_style("Model not downloaded !!!", color = alert_color, bold = bold)
-
-		# 	# ### FIT THE MODEL:
-		# 	# ###_______________
-		# 	# fit_n_save_model(X_train = X_train, 
-		# 	# 				y_train = y_train,
-		# 	# 				epochs = epochs, 
-		# 	# 				test_nbr = test_nbr,
-		# 	# 				verbose_epoch_in_callback = verbose_epoch_in_callback,
-		# 	# 				gdrive_folder_path = gdrive_folder_path,
-		# 	# 				prevent_wait = prevent_wait,
-		# 	# 				verbose_model_checkpoint = verbose_model_checkpoint,
-		# 	# 				batch_size = batch_size_fit,
-		# 	# 				validation_split = validation_split_fit,
-		# 	# 				shuffle = shuffle_fit,
-		# 	# 				verbose_fit = verbose_fit,
-		# 	# 				)
-
-		# 	### USE MODEL TO MAKE PREDICTIONS:
-		# 	###_______________________________
-		# 	model = load_the_model(gdrive_folder_path = gdrive_folder_path, 
-		# 									test_nbr = test_nbr)
-
-		y_pred = model.predict(X_test, verbose = False)
-		assert len(y_pred) == 1, "len(y_pred) == 1"
-		y_pred = float(y_pred[0])
-		y_preds.append(y_pred)
-
-		### GET DF_RESULTS OF DIRECT TEST:
-		###_______________________________
-		if step == steps:
-			print_style("\nPredicting long X_test ...", color = informative_color)
-			y_pred_long = model.predict(X_test_long, verbose = False)
-
-			### COMPILE THE PREDICTION RESULTS:
-			###________________________________
+			### HANDLE COLUMNS AND SPLIT TRAIN AND TEST:
+			###_________________________________________
 			
-			def compare_close_sens(df_close_1, df_close_2):
-				df_close_1 = df_close_1.copy()
-				df_close_2 = df_close_2.copy()
-				def get_sens(df):
-					df_ = df.copy()
-					df_['next'] = df_['close'].shift(-1)
-					df_['sens'] = df_['next'] - df_['close']
-					df_['sens'] = np.where(df_['sens'] > 0.0, 1.0,
-									np.where(df_['sens'] < 0.0, -1.0, 0.0))
-					return df_['sens']
-				##################################
-				sens_1 = get_sens(df = df_close_1)
-				sens_2 = get_sens(df = df_close_2)
-				# print("len sens_1 :", len(sens_1))
-				# print("len sens_2 :", len(sens_2))
-				# print("sens_2 = get_sens(df = df_close_2) >>> done")
-				comparison = (sens_1 == sens_2).tolist()
-				# print("comparison = (sens_1 == sens_2).tolist() >>> done")
-				trues = comparison.count(True)
-				falses = comparison.count(False)
-				assert falses == 0, "falses == 0"
-				if falses == 0:
-					print_style("\n__________________________________________________________________", color = good_color, bold = bold)
-					print_style("______________________________________________________________", color = good_color, bold = bold)
-					print_style("__________________________________________________________\n", color = good_color, bold = bold)
-					print_style("Sense of Scaled Close is identic to Sens of Unscaled Close",
-								color = good_color, bold = bold)
-					print_style("__________________________________________________________", color = good_color, bold = bold)
-					print_style("______________________________________________________________", color = good_color, bold = bold)
-					print_style("__________________________________________________________________\n", color = good_color, bold = bold)
+			### 1/3. ADD SEASONALITY COLUMNS:
+			###______________________________
+			for freq in freqs_seasonal:
+				df = add_seas_column_to_df(df = df, 
+									len_df_get_seas = len_df_get_seas, 
+									freq = freq, 
+									close_col_name = close_column_name)
 
-			print_style("\nGet df_results of direct test ...", color = informative_color)
-			df_x_test = pd.DataFrame([item[-1] for item in X_test_long], 
-										columns = data_cols_names)
-			df_scaled_close = df_x_test[[close_column_name]]
-			df_unscaled_close = reference_date_open_close[[close_column_name]]
-			compare_close_sens(df_close_1 = df_scaled_close, 
-							df_close_2 = df_unscaled_close)
+			### 2/3. SPLIT DATA:
+			###_________________
+			### DELETE THE PART OF DF WHICH CONCERNS THE GETTING SEASONALITY:
+			###______________________________________________________________
+			df = df.tail(df.shape[0] - len_df_get_seas)
+			df.reset_index(inplace = True, drop = True)
 
-			df_x_test = reference_date_open_close[['date_from', 'date_to', 'open', 'close']]
-			df_results_scaled = pd.DataFrame({'y_pred':[item[0] for item in y_pred_long]})
-			df_results = pd.concat([df_x_test, df_results_scaled], axis = 1)
-			df_results_direct = df_results.tail(steps)
-			# df_results.reset_index(inplace = True, drop = True)
-			# direct_df_2_local_path = simulating_realtime_path + f"direct_df_results_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.csv"
-			# df_results.to_csv(direct_df_2_local_path, index = False)
+			### DELETE THE INTERMEDIATE DATA:
+			###______________________________
+			df = df.tail(df.shape[0] - len_intermediate)
+			df.reset_index(inplace = True, drop = True)
 
-		iteration_time_delta = time.time() - start_iteration
-		print_style(f"Iteration time delta : {round(iteration_time_delta, 3)} seconds.", color = 'yellow', bold = bold)
-		all_iteration_time_delta.append(iteration_time_delta)
+			### SPLIT TRAIN AND TEST:
+			###______________________
+			# df_train = df.head(len_train)
+			df_test = df.tail(df.shape[0] - len_train)
+			# df_train.reset_index(inplace = True, drop = True)
+			df_test.reset_index(inplace = True, drop = True)
+			len_test = df_test.shape[0]
 
-		# with open(simulating_realtime_path + f"iteration_time_delta_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.txt", "a") as f:
-		# 	f.write(f"{iteration_time_delta} seconds\n")
-		# 	if step == steps:
-		# 		f.write("Note:\n")
-		# 		f.write("_____\n")
-		# 		f.write("The last iteration can be long sometimes, because of computing direct data !!!\n")
+			# assert total_length_initial_df == (len_df_get_seas + target_shift + len_intermediate + len_train + len_test), \
+			# "total_length_initial_df == (len_df_get_seas + target_shift + len_intermediate + len_train + len_test)"
 
-		# ### GET BALANCE SHEET:
-		# ###___________________
-		# # ########### balance_sheet_filename = f"Balance_sheet_test_nbr_{test_nbr}.txt"
-		# # ########### get_balance_sheet(df_results = df_results, 
-		# # 				close_column_name = close_column_name, 
-		# # 				target_shift = target_shift, 
-		# # 				y_pred_col_name = "y_pred", 
-		# # 				verbose = verbose_eval, 
-		# # 				test_nbr = test_nbr, 
-		# # 				df_tail = df_tail_balance_sheet,
-		# # 				save_to = gdrive_folder_path + balance_sheet_filename)
+			# print_style("________________________________________________________", color = informative_color)
+			# print_style("____________________________________________________", color = informative_color)
+			# print_style("________________________________________________", color = informative_color)
+			# print_style(f"Shape of df_train : {df_train.shape}", color = informative_color)
+			# print_style(f"Shape of df_test  : {df_test.shape}\n", color = informative_color)
+			# print_style('_______________', color = informative_color)
+			# print_style('_______________', color = informative_color)
+			# print_style('_______________\n', color = informative_color)
+			# print_style(f'Length of data getting seasonnality	: {len_df_get_seas}', color = informative_color)
+			# print_style(f'The target shift 			: {target_shift}', color = informative_color)
+			# print_style(f'Length of intermediate data		: {len_intermediate}', color = informative_color)
+			# print_style(f'Length of train dataframe 		: {len_train}', color = informative_color)
+			# print_style(f'Length of test dataframe 		: {len_test}', color = informative_color)
+			# print_style(f'Total Length				: {total_length_initial_df}\n', 
+			# 												color = good_color, bold = bold)
+			# print_style("________________________________________________", color = informative_color)
+			# print_style("____________________________________________________", color = informative_color)
+			# print_style("________________________________________________________\n", color = informative_color)
 
-		# balance_sheet_filename = f"Balance_sheet_test_nbr_{test_nbr}.pkl"
-		# all_results = get_balance_sheet_v2(df_results = df_results,
-		# 				close_column_name = close_column_name,
-		# 				target_shift = target_shift, 
-		# 				y_pred_col_name = 'y_pred', 
-		# 				verbose = verbose_eval, 
-		# 				test_nbr = test_nbr, 
-		# 				df_tail = df_tail_balance_sheet,
-		# 				save_to = gdrive_folder_path + balance_sheet_filename)
+			### 3/3. ADD WAVELETS COLUMNS AND STATIONNARIZED CLOSE:
+			###____________________________________________________
 
-		# ### UPLOAD RESULT FILES:
-		# ###_____________________
-		# result_filenames = [
-		# 	balance_sheet_filename,
-		# 	df_results_filename,
-		# 	f'prev_epochs_test_nbr_{test_nbr}.txt',
-		# 	f'model_test_nbr_{test_nbr}.h5',
-		# 	f'history_test_nbr_{test_nbr}.pkl',
-		# 	f'log_fitting_test_nbr_{test_nbr}.txt',
-		# ]
+			# ### TRAIN DATA:
+			# ###____________
+			# df_train_wavelets_cols = add_wavelets_columns(close_column = df_train[close_column_name])
+			# df_train['dwt_cA'] = df_train_wavelets_cols['dwt_cA']
+			# df_train['dwt_cD'] = df_train_wavelets_cols['dwt_cD']
+			# df_train['dwt_cA_stationnarized'] = df_train_wavelets_cols['dwt_cA_stationnarized']
+			# df_train['stationnarized_close'] = stationnarize_close_column(df = df_train, 
+			# 											close_column_name = close_column_name)
 
-		# print("\n")
-		# for result_filename in result_filenames:
-		# 	result_upload = direct_upload_file(
-		# 		local_file_path_name = gdrive_folder_path + result_filename, 
-		# 		cloud_file_path_name = results_cloud_path + result_filename,
-		# 		)
+			### TEST DATA:
+			###___________
+			df_test_wavelets_cols = add_wavelets_columns(close_column = df_test[close_column_name])
+			df_test['dwt_cA'] = df_test_wavelets_cols['dwt_cA']
+			df_test['dwt_cD'] = df_test_wavelets_cols['dwt_cD']
+			df_test['dwt_cA_stationnarized'] = df_test_wavelets_cols['dwt_cA_stationnarized']
+			df_test['stationnarized_close'] = stationnarize_close_column(df = df_test,
+														close_column_name = close_column_name)
 
-		# 	if result_upload:
-		# 		print_style(f"Successfully upload result file: {result_filename}:\n\t{result_upload}",
-		# 			color = good_color, bold = bold)
-		# 	else:
-		# 		print_style(f"\nResult file {result_filename} wasn't uploaded !!!\n",
-		# 			color = alert_color, bold = bold)
-		# print("\n")
+			# print_style("DF TRAIN:", color = informative_color)
+			# print_style("_________\n", color = informative_color)
+			# print(df_train[['date_from', 'date_to', 'open', 'close']], "\n")
+			# print_style(f"df_train columns : {df_train.columns.tolist()}\n", 
+			# 			color = informative_color)
 
+			# print_style("DF TEST  :", color = informative_color)
+			# print_style("_________\n", color = informative_color)
+			# print(df_test[['date_from', 'date_to', 'open', 'close']], "\n")
+			# print_style(f"df_test columns : {df_test.columns.tolist()}", 
+			# 			color = informative_color)
+			# print("\n")
+
+			if step == steps:
+				reference_date_open_close = df_test[['date_from', 'date_to', 'open', 'close']]
+				# reference_date_open_close.reset_index(inplace = True, drop = True)
+				# reference_date_open_close = reference_date_open_close.tail(
+				# 	reference_date_open_close.shape[0] - (look_back - 1)
+				# 	)
+				reference_date_open_close = reference_date_open_close.tail(look_back + steps)
+				reference_date_open_close.reset_index(inplace = True, drop = True)
+
+			### SCALE TRAIN AND TEST DATA:
+			###___________________________
+
+			### SET DATA COLUMNS NAMES:
+			###________________________
+			data_cols_names_seasonality = [f'seasonality_{d}' for d in freqs_seasonal]
+			data_cols_names = ['close', 
+								'stationnarized_close',
+								# 'soft_0.5', 
+								# 'less_0.5', 
+								# 'soft_0.5_stationnarized',
+								'dwt_cA', 
+								'dwt_cD', 
+								'dwt_cA_stationnarized']
+			data_cols_names += data_cols_names_seasonality
+
+			# ### TRAIN DATA:
+			# ###____________
+			# df_train = df_train[data_cols_names + ['target']]
+			# df_train_scaled, df_train_scaled_scaler = data_scaler(df = df_train)
+
+			### TEST DATA:
+			###___________
+			df_test = df_test[data_cols_names + ['target']]
+			df_test_scaled, df_test_scaled_scaler = data_scaler(df = df_test)
+
+			### SPLIT X AND Y:
+			###_______________
+
+			# ### TRAIN:
+			# ###_______
+			# x_y_train = native_x_y_spliter(df = df_train_scaled, 
+			# 							data_cols_names = data_cols_names, 
+			# 							target_col_name = target_col_name, 
+			# 							look_back = look_back)
+
+			# X_train = x_y_train['dataX']
+			# y_train = x_y_train['dataY']
+
+			### TEST:
+			###______
+			if step == steps:
+				complete_df_test_scaled = df_test_scaled.copy()
+				complete_df_test_scaled = complete_df_test_scaled.tail(2*look_back + steps - 1)
+				complete_df_test_scaled.reset_index(inplace = True, drop = True)
+
+			df_test_scaled = df_test_scaled.tail(look_back)
+			df_test_scaled.reset_index(inplace = True, drop = True)
+			x_y_test = native_x_y_spliter(df = df_test_scaled, 
+										data_cols_names = data_cols_names, 
+										target_col_name = target_col_name, 
+										look_back = look_back)
+
+			if step == steps:
+				print_style("Please wait, Getting long X_test !!!", color = informative_color)
+				x_y_test_long = native_x_y_spliter(df = complete_df_test_scaled, 
+												data_cols_names = data_cols_names, 
+												target_col_name = target_col_name, 
+												look_back = look_back)
+				X_test_long = x_y_test_long['dataX']
+
+			X_test = x_y_test['dataX']
+			assert len(X_test) == 1, "len(X_test) == 1"
+			# ### y_test = x_y_test['dataY']
+
+			# print("\n")
+			# # print_style(f"Shape of X_train :{X_train.shape}", color = informative_color)
+			# # print_style(f"Shape of y_train :{y_train.shape}", color = informative_color)
+			# print_style(f"Shape of X_test  :{X_test.shape}", color = informative_color)
+			# print("\n")
+
+			# ### ########## DOWNLOAD LANDMARKS ABOUT FITTING:
+			# ###__________________________________
+
+			# ############# if step == 1:
+			# 	############ filenames_landmarks = [
+			# 				# f'prev_epochs_test_nbr_{test_nbr}.txt',
+			# 				f'model_test_nbr_{test_nbr}.h5',
+			# 				# f'history_test_nbr_{test_nbr}.pkl',
+			# 				# f'log_fitting_test_nbr_{test_nbr}.txt'
+			# 				]
+
+			# 	# print("\n")
+			# 	for filename_landmark in filenames_landmarks:
+			# 		if not check_file_exists(gdrive_folder_path + filename_landmark):
+			# 			result_downloading = direct_download_file(
+			# 				cloud_file_path_name = landmarks_cloud_path + filename_landmark, 
+			# 				local_file_path_name = gdrive_folder_path + filename_landmark)
+
+			# 			if result_downloading:
+			# 				print_style(f"Successfully downloaded {filename_landmark}", 
+			# 					color = good_color, bold = bold)
+			# 			else:
+			# 				print_style(f"File not downloaded: {filename_landmark}",
+			# 					color = alert_color, bold = bold)
+			# 	print("\n")
+
+			# ### DOWNLOAD THE MODEL:
+			# ###____________________
+			# if step == 1:
+			# 	model_filename = f'model_test_nbr_{test_nbr}.h5'
+			# 	result_download_model = direct_download_file(
+			# 		cloud_file_path_name = results_cloud_path + model_filename, 
+			# 		local_file_path_name = gdrive_folder_path + model_filename,
+			# 		)
+			# 	if result_download_model:
+			# 		print_style("Model successfully downloaded !!!", color = good_color, bold = bold)
+			# 	elif not result_download_model:
+			# 		print_style("Model not downloaded !!!", color = alert_color, bold = bold)
+
+			# 	# ### FIT THE MODEL:
+			# 	# ###_______________
+			# 	# fit_n_save_model(X_train = X_train, 
+			# 	# 				y_train = y_train,
+			# 	# 				epochs = epochs, 
+			# 	# 				test_nbr = test_nbr,
+			# 	# 				verbose_epoch_in_callback = verbose_epoch_in_callback,
+			# 	# 				gdrive_folder_path = gdrive_folder_path,
+			# 	# 				prevent_wait = prevent_wait,
+			# 	# 				verbose_model_checkpoint = verbose_model_checkpoint,
+			# 	# 				batch_size = batch_size_fit,
+			# 	# 				validation_split = validation_split_fit,
+			# 	# 				shuffle = shuffle_fit,
+			# 	# 				verbose_fit = verbose_fit,
+			# 	# 				)
+
+			# 	### USE MODEL TO MAKE PREDICTIONS:
+			# 	###_______________________________
+			# 	model = load_the_model(gdrive_folder_path = gdrive_folder_path, 
+			# 									test_nbr = test_nbr)
+
+			y_pred = model.predict(X_test, verbose = False)
+			assert len(y_pred) == 1, "len(y_pred) == 1"
+			y_pred = float(y_pred[0])
+			y_preds.append(y_pred)
+
+			### GET DF_RESULTS OF DIRECT TEST:
+			###_______________________________
+			if step == steps:
+				print_style("\nPredicting long X_test ...", color = informative_color)
+				y_pred_long = model.predict(X_test_long, verbose = False)
+
+				### COMPILE THE PREDICTION RESULTS:
+				###________________________________
+				
+				def compare_close_sens(df_close_1, df_close_2):
+					df_close_1 = df_close_1.copy()
+					df_close_2 = df_close_2.copy()
+					def get_sens(df):
+						df_ = df.copy()
+						df_['next'] = df_['close'].shift(-1)
+						df_['sens'] = df_['next'] - df_['close']
+						df_['sens'] = np.where(df_['sens'] > 0.0, 1.0,
+										np.where(df_['sens'] < 0.0, -1.0, 0.0))
+						return df_['sens']
+					##################################
+					sens_1 = get_sens(df = df_close_1)
+					sens_2 = get_sens(df = df_close_2)
+					# print("len sens_1 :", len(sens_1))
+					# print("len sens_2 :", len(sens_2))
+					# print("sens_2 = get_sens(df = df_close_2) >>> done")
+					comparison = (sens_1 == sens_2).tolist()
+					# print("comparison = (sens_1 == sens_2).tolist() >>> done")
+					trues = comparison.count(True)
+					falses = comparison.count(False)
+					assert falses == 0, "falses == 0"
+					if falses == 0:
+						print_style("\n__________________________________________________________________", color = good_color, bold = bold)
+						print_style("______________________________________________________________", color = good_color, bold = bold)
+						print_style("__________________________________________________________\n", color = good_color, bold = bold)
+						print_style("Sense of Scaled Close is identic to Sens of Unscaled Close",
+									color = good_color, bold = bold)
+						print_style("__________________________________________________________", color = good_color, bold = bold)
+						print_style("______________________________________________________________", color = good_color, bold = bold)
+						print_style("__________________________________________________________________\n", color = good_color, bold = bold)
+
+				print_style("\nGet df_results of direct test ...", color = informative_color)
+				df_x_test = pd.DataFrame([item[-1] for item in X_test_long], 
+											columns = data_cols_names)
+				df_scaled_close = df_x_test[[close_column_name]]
+				df_unscaled_close = reference_date_open_close[[close_column_name]]
+				compare_close_sens(df_close_1 = df_scaled_close, 
+								df_close_2 = df_unscaled_close)
+
+				df_x_test = reference_date_open_close[['date_from', 'date_to', 'open', 'close']]
+				df_results_scaled = pd.DataFrame({'y_pred':[item[0] for item in y_pred_long]})
+				df_results = pd.concat([df_x_test, df_results_scaled], axis = 1)
+				direct_df_results = df_results.tail(steps)
+				# direct_df_results.reset_index(inplace = True, drop = True)
+				# direct_df_2_local_path = simulating_realtime_path + f"direct_df_results_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.csv"
+				# direct_df_results.to_csv(direct_df_2_local_path, index = False)
+
+			iteration_time_delta = time.time() - start_iteration
+			print_style(f"Iteration time delta : {round(iteration_time_delta, 3)} seconds.", color = 'yellow', bold = bold)
+
+			all_iteration_time_delta.append(iteration_time_delta)
+			# with open(simulating_realtime_path + f"iteration_time_delta_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.txt", "a") as f:
+			# 	f.write(f"{iteration_time_delta} seconds\n")
+			# 	if step == steps:
+			# 		f.write("Note:\n")
+			# 		f.write("_____\n")
+			# 		f.write("The last iteration can be long sometimes, because of computing direct data !!!\n")
+
+			# ### GET BALANCE SHEET:
+			# ###___________________
+			# # ########### balance_sheet_filename = f"Balance_sheet_test_nbr_{test_nbr}.txt"
+			# # ########### get_balance_sheet(df_results = df_results, 
+			# # 				close_column_name = close_column_name, 
+			# # 				target_shift = target_shift, 
+			# # 				y_pred_col_name = "y_pred", 
+			# # 				verbose = verbose_eval, 
+			# # 				test_nbr = test_nbr, 
+			# # 				df_tail = df_tail_balance_sheet,
+			# # 				save_to = gdrive_folder_path + balance_sheet_filename)
+
+			# balance_sheet_filename = f"Balance_sheet_test_nbr_{test_nbr}.pkl"
+			# all_results = get_balance_sheet_v2(df_results = df_results,
+			# 				close_column_name = close_column_name,
+			# 				target_shift = target_shift, 
+			# 				y_pred_col_name = 'y_pred', 
+			# 				verbose = verbose_eval, 
+			# 				test_nbr = test_nbr, 
+			# 				df_tail = df_tail_balance_sheet,
+			# 				save_to = gdrive_folder_path + balance_sheet_filename)
+
+			# ### UPLOAD RESULT FILES:
+			# ###_____________________
+			# result_filenames = [
+			# 	balance_sheet_filename,
+			# 	df_results_filename,
+			# 	f'prev_epochs_test_nbr_{test_nbr}.txt',
+			# 	f'model_test_nbr_{test_nbr}.h5',
+			# 	f'history_test_nbr_{test_nbr}.pkl',
+			# 	f'log_fitting_test_nbr_{test_nbr}.txt',
+			# ]
+
+			# print("\n")
+			# for result_filename in result_filenames:
+			# 	result_upload = direct_upload_file(
+			# 		local_file_path_name = gdrive_folder_path + result_filename, 
+			# 		cloud_file_path_name = results_cloud_path + result_filename,
+			# 		)
+
+			# 	if result_upload:
+			# 		print_style(f"Successfully upload result file: {result_filename}:\n\t{result_upload}",
+			# 			color = good_color, bold = bold)
+			# 	else:
+			# 		print_style(f"\nResult file {result_filename} wasn't uploaded !!!\n",
+			# 			color = alert_color, bold = bold)
+			# print("\n")
+
+			if step != steps: ### if we are on the last step, we don't need to wait 
+							  ### for the next minute.
+				datetime_now = datetime.datetime.fromtimestamp(int(time.time()))
+				print_style(f'Wait for the next minute,\nDatetime now : {datetime_now}', color = informative_color)
+				time.sleep((60 - datetime_now.second) - 5)
+
+			if step == steps:
+				break
+			step += 1
+
+	### GET TOTAL DF LENGTH:
+	###_____________________
+	complete_df_length_filename = f"complete_df_length_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.txt"
+	with open(simulating_realtime_path + complete_df_length_filename, "w") as f:
+		f.write(f"Length of the last complete df :{complete_df_length}\n")
+	files.download(simulating_realtime_path + complete_df_length_filename)
+	
 	### COMPILE INDIRECT DATA:
 	###_______________________
 	# indirect_df_results_filename = f"indirect_df_results_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.csv"
@@ -2165,14 +2226,14 @@ def manage(test_nbr,
 	# indirect_df_y_preds.to_csv(simulating_realtime_path + indirect_df_results_filename,
 	# 							index = False)
 
-	total_df_results = df_results_direct.copy()
+	total_df_results = direct_df_results.copy()
 	total_df_results['y_pred_indirect'] = y_preds
-	total_df_results['time delta (seconds)'] = all_iteration_time_delta
+	total_df_results['time_delta (seconds)'] = all_iteration_time_delta
 	total_df_results_filename = f"total_df_results_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.csv"
 	total_df_results.to_csv(simulating_realtime_path + total_df_results_filename, index = False)
 
-	### DOWNLOAD FILES TO LOCAL STORAGE:
-	###_________________________________
+	# ### DOWNLOAD FILES TO LOCAL STORAGE:
+	# ###_________________________________
 	# files.download(direct_df_2_local_path)
 	# files.download(simulating_realtime_path + indirect_df_results_filename)
 	# files.download(simulating_realtime_path + f"iteration_time_delta_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.txt")
