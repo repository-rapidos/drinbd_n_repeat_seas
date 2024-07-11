@@ -206,6 +206,11 @@ if platform.uname().node != "Gilbert-PC" and check_environment() != 'Colab':
 	print("\n\tWe are not neither on Gilbert-PC nor on Colab !!!")
 	time.sleep(60)
 
+
+def df_csv_saver_append(df, filename):
+	assert filename.endswith(".csv"), 'filename.endswith(".csv")'
+	df.to_csv(filename, mode = 'a', header = not check_file_exists(filename), index = False)
+
 ###################################
 ########## SECTION DATASCIENCE:
 
@@ -1671,6 +1676,7 @@ def manage(account,
 		minimal_balance_tradable,
 		compute_balance_sheet,
 		running_id,
+		parite_minute_predictive,
 		use_tests_53_models_nbr = None,
 		df_tail_balance_sheet = None, ## example 1440: donc 1440 dernières minutes (=> les 24 dernières heures)
 		len_df_get_seas = 19_999,
@@ -2159,7 +2165,7 @@ def manage(account,
 		# print("_____________________")
 		# print(df_results)
 		# print("\nThe actual Y_pred :", df_results['y_pred'].tolist()[-1], "\n")
-		prediction = df_results['y_pred'].tolist()[-1]
+		prediction = df_results['y_pred'].tolist()[-2]
 		predictions = {test_nbr:prediction}
 
 	if use_tests_53_models_nbr is not None:
@@ -2185,7 +2191,7 @@ def manage(account,
 			# print("_____________________")
 			# print(df_results)
 			# print("\nThe actual Y_pred :", df_results['y_pred'].tolist()[-1], "\n")
-			predictions.update({model_name:df_results['y_pred'].tolist()[-1]})
+			predictions.update({model_name:df_results['y_pred'].tolist()[-2]})
 
 	### PASS ORDERS:
 	###_____________
@@ -2209,24 +2215,51 @@ def manage(account,
 		if balance > minimal_balance_tradable:
 			balance_condition = True
 
-		if order_type != 'wait' and balance_condition == True and nbr_runs > 1:
+
+		assert parite_minute_predictive == 'pair' or \
+		parite_minute_predictive == 'impair' or parite_minute_predictive \
+		== 'tout', "parite_minute_predictive == 'pair' or parite_minute_predictive \
+		== 'impair' or parite_minute_predictive == 'tout'"
+		
+		if parite_minute_predictive == 'tout':
+			trade_parite_condition = True
+
+		elif parite_minute_predictive != 'tout':
+			minute_now_pair = is_pair(value = os_minute_now)
+
+			if parite_minute_predictive == 'pair':
+				if minute_now_pair: ## condition == pair, minute == pair
+					trade_parite_condition = True
+				elif not minute_now_pair: ## condition == pair, minute == impair
+					trade_parite_condition = False
+
+			if parite_minute_predictive == 'impair':
+				if minute_now_pair: ## condition == impair, minute == pair
+					trade_parite_condition = False
+				elif not minute_now_pair: ## condition == impair, minute == impair
+					trade_parite_condition = True
+
+		if order_type != 'wait' and balance_condition == True and nbr_runs > 1 and trade_parite_condition == True:
 			check, _id = digital.pass_order(amount = invest_amount, 
 									pair = 'EURUSD', 
 									order_type = order_type, 
 									expiration = 1)
 
-			with open(trades_logs_path + f'EURUSD-trades-logs-Id_{running_id}.txt', 'a') as f:
-				f.write(f"Trade taken on 			: {datetime.datetime.fromtimestamp(int(time.time()))}\n")
-				f.write(f"Model used 				: {model_name}\n")
-				f.write(f"Prediction 				: {prediction}\n")
-				f.write(f"The rappr 				: {the_rappr}\n")
-				f.write(f"Trade Signal 			: {trade_signal}\n")
-				f.write(f"Order type 				: {order_type}\n")
-				f.write(f"Check      				: {check}\n")
-				f.write(f"Trade id   				: {_id}\n")
-				f.write(f"Invested amount 		: {invest_amount} $\n")
-				f.write(f"Last Data df_results 	: {last_data}\n")
-				f.write("______________________________________________________________\n")
+			df_trades_logs = pd.DataFrame({
+					"Trade taken on":[datetime.datetime.fromtimestamp(int(time.time()))],
+					"Model used":[model_name],
+					"Prediction":[prediction],
+					"The rappr":[the_rappr],
+					"Trade Signal":[trade_signal],
+					"Order type":[order_type],
+					"Check":[check],
+					"Trade id":[_id],
+					"Invested amount":[invest_amount],
+					"Last Data df_results":[last_data],
+				})
+
+			df_csv_saver_append(df = df_trades_logs, 
+					filename = trades_logs_path + f'EURUSD-trades-logs-Id_{running_id}.csv')
 
 	### GET BALANCE SHEET:
 	###___________________
