@@ -1676,7 +1676,7 @@ def manage(account,
 		minimal_balance_tradable,
 		compute_balance_sheet,
 		running_id,
-		parite_minute_predictive,
+		parite_minute_predite,
 		use_tests_53_models_nbr = None,
 		df_tail_balance_sheet = None, ## example 1440: donc 1440 dernières minutes (=> les 24 dernières heures)
 		len_df_get_seas = 19_999,
@@ -2216,24 +2216,24 @@ def manage(account,
 			balance_condition = True
 
 
-		assert parite_minute_predictive == 'pair' or \
-		parite_minute_predictive == 'impair' or parite_minute_predictive \
-		== 'tout', "parite_minute_predictive == 'pair' or parite_minute_predictive \
-		== 'impair' or parite_minute_predictive == 'tout'"
+		assert parite_minute_predite == 'pair' or \
+		parite_minute_predite == 'impair' or parite_minute_predite \
+		== 'tout', "parite_minute_predite == 'pair' or parite_minute_predite \
+		== 'impair' or parite_minute_predite == 'tout'"
 		
-		if parite_minute_predictive == 'tout':
+		if parite_minute_predite == 'tout':
 			trade_parite_condition = True
 
-		elif parite_minute_predictive != 'tout':
+		elif parite_minute_predite != 'tout':
 			minute_now_pair = is_pair(value = os_minute_now)
 
-			if parite_minute_predictive == 'pair':
+			if parite_minute_predite == 'pair':
 				if minute_now_pair: ## condition == pair, minute == pair
 					trade_parite_condition = True
 				elif not minute_now_pair: ## condition == pair, minute == impair
 					trade_parite_condition = False
 
-			if parite_minute_predictive == 'impair':
+			if parite_minute_predite == 'impair':
 				if minute_now_pair: ## condition == impair, minute == pair
 					trade_parite_condition = False
 				elif not minute_now_pair: ## condition == impair, minute == impair
