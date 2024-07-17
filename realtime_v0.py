@@ -206,11 +206,6 @@ if platform.uname().node != "Gilbert-PC" and check_environment() != 'Colab':
 	print("\n\tWe are not neither on Gilbert-PC nor on Colab !!!")
 	time.sleep(60)
 
-
-def df_csv_saver_append(df, filename):
-	assert filename.endswith(".csv"), 'filename.endswith(".csv")'
-	df.to_csv(filename, mode = 'a', header = not check_file_exists(filename), index = False)
-
 ###################################
 ########## SECTION DATASCIENCE:
 
@@ -905,20 +900,6 @@ def get_balance_sheet(df_results,
 			f.write(f"\t  Accuracy     : {accuracy}\n")
 
 
-def get_rapprochement_v2(y_pred, rappr):
-	def _get_rapprochement_v2(y_pred):
-		assert rappr < 0.5, "rappr < 0.5"
-		middle_up = 0.5 + abs(rappr)
-		middle_down = 0.5 - abs(rappr)
-		if y_pred>middle_up:
-			return 1.0
-		elif y_pred<middle_down:
-			return 0.0
-		else:
-			return 0.5
-	return list(map(_get_rapprochement_v2, y_pred))
-
-
 def get_balance_sheet_v2(df_results,
 	close_column_name,
 	target_shift, 
@@ -942,6 +923,19 @@ def get_balance_sheet_v2(df_results,
 			return 0.5
 		else:
 			return 1.0
+
+	def get_rapprochement_v2(y_pred, rappr):
+		def _get_rapprochement_v2(y_pred):
+			assert rappr < 0.5, "rappr < 0.5"
+			middle_up = 0.5 + abs(rappr)
+			middle_down = 0.5 - abs(rappr)
+			if y_pred>middle_up:
+				return 1.0
+			elif y_pred<middle_down:
+				return 0.0
+			else:
+				return 0.5
+		return list(map(_get_rapprochement_v2, y_pred))
 
 	df_total = df_results.copy()
 
@@ -1445,95 +1439,6 @@ def get_big_data_candles(account, pair, timeframe, start_timestamp, verbose = Fa
 	new_df = get_concerned_candles(df = df, start_timestamp = start_timestamp)
 	return new_df
 
-
-class Binary:
-	def __init__(self, account):
-		self.account = account
-
-	def pass_order(self, amount, pair, order_type, expiration):
-		check, _id = self.account.buy(amount, pair, order_type, expiration)
-		"""
-           Connexion à IQ Option ...
-           Compte : georgeskalume05@gmail.com
-           Connecté à IQ Option.
-			check : True
-			id : 11533722642
-
-			check : True
-			id : 11533722672
-			
-			check : False
-			id : Cannot purchase an option (active is suspended)
-
-			##################
-
-			check : True
-			id : 11533921841
-			Type of id : <class 'builtin_function_or_method'>
-			str_id : 11533921841
-			Type of str_id : <class 'str'>
-
-			check : False
-			id : Cannot purchase an option (active is suspended)
-			Type of id : <class 'builtin_function_or_method'>
-			str_id : Cannot purchase an option (active is suspended)
-			Type of str_id : <class 'str'>
-
-		"""
-		return check, _id
-
-	def get_history(self, nbr_data):
-		# ## data = self.account.get_optioninfo(nbr_data)
-		data = self.account.get_optioninfo_v2(nbr_data)
-		history_node = data['msg']['closed_options']
-		return {"all_data":data, "history_node":history_node}
-
-	def trade_closed(self, _id):
-		history_node = self.get_history(nbr_data = 30)['history_node']
-		all_ids_closed_trades = [hist['id'][0] for hist in history_node]
-		if _id in all_ids_closed_trades:
-			return True
-		else:
-			return False
-
-class Digital:
-	def __init__(self, account):
-		self.account = account
-	
-	def pass_order(self, amount, pair, order_type, expiration):
-		check, _id = self.account.buy_digital_spot(pair, amount, order_type, expiration)
-
-		"""
-		Pair : USDJPY
-		Check : True
-		Id    : 18965320252
-
-		Pair : CADCHF
-		Check : False
-		Id    : {'message': 'quotesApplication.ConsumeQuoteByTimeDeprecated: invalid instrument: doCADCHF202405140851PT1MPSPT'}
-
-		Pair : CADCHF
-		Check : False
-		Id    : {'message': 'quotesApplication.ConsumeQuoteByTimeDeprecated: invalid instrument: doCADCHF202405140852PT1MPSPT'}
-		Type of id - message: <class 'str'>
-		"""
-		return check, _id
-
-	def get_history(self, nbr_data):
-		data = self.account.get_position_history_v2(instrument_type = "digital-option",
-								limit = nbr_data, offset = 0, start = 0, end = 0)
-		history_node = data[1]['positions']
-		return {"all_data":data, "history_node":history_node}
-
-	def trade_closed(self, _id):
-		history_node = self.get_history(nbr_data = 30)['history_node']
-		all_ids_closed_trades = [item['raw_event']['order_ids'][0] for item in history_node]
-
-		if _id in all_ids_closed_trades:
-			return True
-		else:
-			return False
-
 ###################################
 ########## SECTION MANAGE:
 
@@ -1637,8 +1542,7 @@ def download_model(model_eurusd_concerned, test_nbr):
 from google.colab import files
 global nbr_runs
 nbr_runs = 0
-def manage(account,
-		test_nbr,
+def manage(test_nbr,
 		# dataset_key,
 		model_eurusd_concerned,
 		close_column_name,
@@ -1671,13 +1575,7 @@ def manage(account,
 		len_train,
 		len_intermediate,
 		last_data,
-		the_rappr,
-		invest_amount,
-		minimal_balance_tradable,
-		compute_balance_sheet,
-		running_id,
-		parite_minute_predite,
-		use_tests_53_models_nbr = None,
+		compute_balance_sheet_modulo,
 		df_tail_balance_sheet = None, ## example 1440: donc 1440 dernières minutes (=> les 24 dernières heures)
 		len_df_get_seas = 19_999,
 				#############
@@ -1685,12 +1583,9 @@ def manage(account,
 		##############################
 		):
 
-	if use_tests_53_models_nbr is not None:
-		test_nbr = "Xx-Model"
-
 	global nbr_runs
 	
-	print_style(f"\nRunning number: {nbr_runs}", color = 'cyan')
+	print_style(f"\nNbr runs {nbr_runs}", color = 'cyan')
 
 	if nbr_runs == 0:
 		### WAIT GOOGLE DRIVE CONNECTED:
@@ -1746,12 +1641,12 @@ def manage(account,
 		# 	# url_dataset += "?raw=true"
 		# 	# df = pd.read_csv(url_dataset)
 
-		# if nbr_runs == 0:
-		# 	global account
-		# 	account = connect_2_iq_option_account(
-		# 							iq_email = 'georgeskalume05@gmail.com', 
-		# 							iq_password = 'georgesKal*2489', 
-		# 							account_type = "PRACTICE")
+		if nbr_runs == 0:
+			global account
+			account = connect_2_iq_option_account(
+									iq_email = 'georgeskalume05@gmail.com', 
+									iq_password = 'georgesKal*2489', 
+									account_type = "PRACTICE")
 
 		# # 2023-12-13 04:44:00
 		# start_timestamp = {
@@ -1861,12 +1756,6 @@ def manage(account,
 	# 	print(df)
 	# print("\ndf original columns :", df.columns.tolist(),"\n")
 	
-	trades_logs_path = f"/content/drive/MyDrive/trades_logs/"
-	try:
-		os.mkdir(trades_logs_path)
-	except:
-		pass
-
 	# simulating_realtime_path = f"/content/drive/MyDrive/shortcut_simulating_realtime_{test_nbr}_trial_nbr_{trial_nbr}/"	
 	# try:
 	# 	os.mkdir(simulating_realtime_path)
@@ -2031,68 +1920,26 @@ def manage(account,
 	###____________________
 
 	if nbr_runs == 0:
-		if use_tests_53_models_nbr is None:
-			model_filename = f'model_test_nbr_{test_nbr}.h5'
-			result_download_model = direct_download_file(
-				cloud_file_path_name = results_cloud_path + model_filename, 
-				local_file_path_name = gdrive_folder_path + model_filename,
-				)
-			if result_download_model:
-				print_style(f"{model_filename} successfully downloaded !!!", color = good_color, bold = bold)
-			elif not result_download_model:
-				print_style(f"{model_filename} not downloaded !!!", color = alert_color, bold = bold)
-
-		if use_tests_53_models_nbr is not None:
-			model_filenames = [
-					'model_test_nbr_drinbd_n_repeat_seas_53.1.h5',
-					'model_test_nbr_drinbd_n_repeat_seas_53.2.h5',
-					'model_test_nbr_drinbd_n_repeat_seas_53.3.h5',
-					'model_test_nbr_drinbd_n_repeat_seas_53.4.h5',
-					'model_test_nbr_drinbd_n_repeat_seas_53.5.h5',
-					]
-
-			for model_filename in model_filenames:
-				result_download_model = direct_download_file(
-					cloud_file_path_name = results_cloud_path + model_filename, 
-					local_file_path_name = gdrive_folder_path + model_filename,
-					)
-				if result_download_model:
-					print_style(f"{model_filename} successfully downloaded !!!", color = good_color, bold = bold)
-				elif not result_download_model:
-					print_style(f"{model_filename} not downloaded !!!", color = alert_color, bold = bold)
+		model_filename = f'model_test_nbr_{test_nbr}.h5'
+		result_download_model = direct_download_file(
+			cloud_file_path_name = results_cloud_path + model_filename, 
+			local_file_path_name = gdrive_folder_path + model_filename,
+			)
+		if result_download_model:
+			print_style("Model successfully downloaded !!!", color = good_color, bold = bold)
+		elif not result_download_model:
+			print_style("Model not downloaded !!!", color = alert_color, bold = bold)
 
 		### LOAD THE MODEL:
 		###_________________
-
-		if use_tests_53_models_nbr is None:
-			global model
-			model = load_the_model(gdrive_folder_path = gdrive_folder_path, 
+		global model
+		model = load_the_model(gdrive_folder_path = gdrive_folder_path, 
 										test_nbr = test_nbr)
-
-		if use_tests_53_models_nbr is not None:
-			_model_test_nbrs_ = ["drinbd_n_repeat_seas_53.1",
-								"drinbd_n_repeat_seas_53.2",
-								"drinbd_n_repeat_seas_53.3",
-								"drinbd_n_repeat_seas_53.4",
-								"drinbd_n_repeat_seas_53.5",]
-
-			_model_test_nbrs_ = _model_test_nbrs_[:use_tests_53_models_nbr]
-			global models
-			models = {}
-			for _model_test_nbr_ in _model_test_nbrs_:
-				model = load_the_model(gdrive_folder_path = gdrive_folder_path, 
-										test_nbr = _model_test_nbr_)
-				models.update({_model_test_nbr_:model})
 
 	### GET DF_RESULTS OF DIRECT TEST:
 	###_______________________________
-	if use_tests_53_models_nbr is None:
-		# print_style("\nPredicting X_test ...", color = informative_color)
-		y_pred = model.predict(X_test, verbose = False)
-	if use_tests_53_models_nbr is not None:
-		y_preds = {}
-		for model_name, model in models.items():
-			y_preds.update({model_name:model.predict(X_test, verbose = False)})
+	# print_style("\nPredicting X_test ...", color = informative_color)
+	y_pred = model.predict(X_test, verbose = False)
 
 	### COMPILE THE PREDICTION RESULTS:
 	###________________________________
@@ -2146,150 +1993,45 @@ def manage(account,
 		compare_close_sens(df_close_1 = df_scaled_close, 
 						df_close_2 = df_unscaled_close)
 
+	df_x_test = reference_date_open_close[['date_from', 'date_to', 'open', 'close']]
+	df_results_scaled = pd.DataFrame({'y_pred':[item[0] for item in y_pred]})
+	df_results = pd.concat([df_x_test, df_results_scaled], axis = 1)
+	df_results = df_results.tail(last_data)
+	# direct_df_filename = f"direct_df_results_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.csv"
+	# df_results.to_csv(simulating_realtime_path + direct_df_filename, index = False)
+
+	### INSURE THAT WE PREDICT THE RUNNING CANDLE:
+	###____________________________________________
+	df_results_last_minute_from = int(df_results.tail(1)['date_from'].tolist()[-1].split(" ")[1].split(":")[1])
 	os_minute_now = int(datetime.datetime.now().minute)
-	if int(reference_date_open_close.tail(1)['date_from'].tolist()[-1].split(" ")[1].split(":")[1]) == os_minute_now:
+	# #### assert df_results_last_minute_from == os_minute_now, "df_results_last_minute_from == os_minute_now"
 
-		if use_tests_53_models_nbr is None:
-			df_x_test = reference_date_open_close[['date_from', 'date_to', 'open', 'close']]
-			df_results_scaled = pd.DataFrame({'y_pred':[item[0] for item in y_pred]})
-			df_results = pd.concat([df_x_test, df_results_scaled], axis = 1)
-			df_results = df_results.tail(last_data)
-			# direct_df_filename = f"direct_df_results_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.csv"
-			# df_results.to_csv(simulating_realtime_path + direct_df_filename, index = False)
-		
-			# ### INSURE THAT WE PREDICT THE RUNNING CANDLE:
-			# ###____________________________________________
-			# df_results_last_minute_from = int(df_results.tail(1)['date_from'].tolist()[-1].split(" ")[1].split(":")[1])
-			# os_minute_now = int(datetime.datetime.now().minute)
-			# #### assert df_results_last_minute_from == os_minute_now, "df_results_last_minute_from == os_minute_now"
-
-			# print("\n")
-			# print("df_results :")
-			# print("_____________________")
-			# print(df_results)
-			# print("\nThe actual Y_pred :", df_results['y_pred'].tolist()[-1], "\n")
-			prediction = df_results['y_pred'].tolist()[-2]
-			predictions = {test_nbr:prediction}
-
-		if use_tests_53_models_nbr is not None:
-			predictions = {}
-			for idx_y_preds, (model_name, y_pred) in enumerate(y_preds.items()):
-
-				df_x_test = reference_date_open_close[['date_from', 'date_to', 'open', 'close']]
-				df_results_scaled = pd.DataFrame({'y_pred':[item[0] for item in y_pred]})
-				df_results = pd.concat([df_x_test, df_results_scaled], axis = 1)
-				df_results = df_results.tail(last_data)
-				# direct_df_filename = f"direct_df_results_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.csv"
-				# df_results.to_csv(simulating_realtime_path + direct_df_filename, index = False)
-			
-				# ### INSURE THAT WE PREDICT THE RUNNING CANDLE:
-				# ###____________________________________________
-				# if idx_y_preds == 0:
-				# 	df_results_last_minute_from = int(df_results.tail(1)['date_from'].tolist()[-1].split(" ")[1].split(":")[1])
-				# 	os_minute_now = int(datetime.datetime.now().minute)
-				# 	#### assert df_results_last_minute_from == os_minute_now, "df_results_last_minute_from == os_minute_now"
-
-				# print("\n")
-				# print("df_results :")
-				# print("_____________________")
-				# print(df_results)
-				# print("\nThe actual Y_pred :", df_results['y_pred'].tolist()[-1], "\n")
-				predictions.update({model_name:df_results['y_pred'].tolist()[-2]})
-
-		### PASS ORDERS:
-		###_____________
-
-		if nbr_runs == 0:
-			global digital
-			digital = Digital(account = account)
-
-		for model_name, prediction in predictions.items():
-			trade_signal = get_rapprochement_v2(y_pred = [prediction], rappr = the_rappr)[0]
-
-			if trade_signal == 0.0:
-				order_type = 'put'
-			elif trade_signal == 1.0:
-				order_type = 'call'
-			else:
-				order_type = 'wait'
-
-			balance_condition = False
-			balance = account.get_balance()
-			if balance > minimal_balance_tradable:
-				balance_condition = True
-
-
-			assert parite_minute_predite == 'pair' or \
-			parite_minute_predite == 'impair' or parite_minute_predite \
-			== 'tout', "parite_minute_predite == 'pair' or parite_minute_predite \
-			== 'impair' or parite_minute_predite == 'tout'"
-			
-			if parite_minute_predite == 'tout':
-				trade_parite_condition = True
-
-			elif parite_minute_predite != 'tout':
-				minute_now_pair = is_pair(value = os_minute_now)
-
-				if parite_minute_predite == 'pair':
-					if minute_now_pair: ## condition == pair, minute == pair
-						trade_parite_condition = True
-					elif not minute_now_pair: ## condition == pair, minute == impair
-						trade_parite_condition = False
-
-				if parite_minute_predite == 'impair':
-					if minute_now_pair: ## condition == impair, minute == pair
-						trade_parite_condition = False
-					elif not minute_now_pair: ## condition == impair, minute == impair
-						trade_parite_condition = True
-
-			if order_type != 'wait' and balance_condition == True and nbr_runs > 1 and trade_parite_condition == True:
-				check, _id = digital.pass_order(amount = invest_amount, 
-										pair = 'EURUSD', 
-										order_type = order_type, 
-										expiration = 1)
-
-				df_trades_logs = pd.DataFrame({
-						"Trade taken on":[datetime.datetime.fromtimestamp(int(time.time()))],
-						"Model used":[model_name],
-						"Prediction":[prediction],
-						"The rappr":[the_rappr],
-						"Trade Signal":[trade_signal],
-						"Order type":[order_type],
-						"Check":[check],
-						"Trade id":[_id],
-						"Invested amount":[invest_amount],
-						"Last Data df_results":[last_data],
-					})
-
-				df_csv_saver_append(df = df_trades_logs, 
-						filename = trades_logs_path + f'EURUSD-trades-logs-Id_{running_id}.csv')
+	if df_results_last_minute_from == os_minute_now:
+		print("\n")
+		print("df_results :")
+		print("_____________________")
+		print(df_results.head(15))
+		print()
+		print(df_results.tail(15))
 
 		### GET BALANCE SHEET:
 		###___________________
-		if compute_balance_sheet:
-			if use_tests_53_models_nbr is None:
-				# balance_sheet_filename = f"Balance_sheet_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.pkl"
-				all_results = get_balance_sheet_v2(df_results = df_results,
-								close_column_name = close_column_name,
-								target_shift = target_shift, 
-								y_pred_col_name = 'y_pred', 
-								verbose = verbose_eval, 
-								test_nbr = test_nbr, 
-								rappr_jump = 3,
-								df_tail = df_tail_balance_sheet,
-								save_to = None,
-								# save_to = simulating_realtime_path + balance_sheet_filename,
-								)
+		if nbr_runs%compute_balance_sheet_modulo == 0:
+			# balance_sheet_filename = f"Balance_sheet_test_nbr_{test_nbr}_trial_nbr_{trial_nbr}.pkl"
+			all_results = get_balance_sheet_v2(df_results = df_results,
+							close_column_name = close_column_name,
+							target_shift = target_shift, 
+							y_pred_col_name = 'y_pred', 
+							verbose = verbose_eval, 
+							test_nbr = test_nbr, 
+							rappr_jump = 3,
+							df_tail = df_tail_balance_sheet,
+							save_to = None,
+							# save_to = simulating_realtime_path + balance_sheet_filename,
+							)
 
-				for idx, res in enumerate(all_results['df_total']):
-					print(res)
-
-			if use_tests_53_models_nbr is not None:
-				print("\n")
-				for _ in range(10):
-					print("When we use many models we don't prefer to \
-	compute the balance_sheets of \nall those df_results in order \
-	to avoid to add the time delta.\n")
+			for idx, res in enumerate(all_results['df_total']):
+				print(res)
 
 		### SIGNAL THE ENDING OF CODE:
 		###___________________________
