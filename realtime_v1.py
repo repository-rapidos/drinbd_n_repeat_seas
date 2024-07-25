@@ -2141,10 +2141,17 @@ def manage(account,
 								columns = data_cols_names)
 
 	if nbr_runs == 0:
+		### COMPARE CLOSE SENS:
+		###____________________
 		df_scaled_close = df_x_test[[close_column_name]]
 		df_unscaled_close = reference_date_open_close[[close_column_name]]
 		compare_close_sens(df_close_1 = df_scaled_close, 
 						df_close_2 = df_unscaled_close)
+
+		### INSTANTIATE DIGITAL CLASS:
+		###___________________________
+		global digital
+		digital = Digital(account = account)
 
 	os_minute_now = int(datetime.datetime.now().minute)
 	if int(reference_date_open_close.tail(1)['date_from'].tolist()[-1].split(" ")[1].split(":")[1]) == os_minute_now:
@@ -2198,11 +2205,6 @@ def manage(account,
 
 		### PASS ORDERS:
 		###_____________
-
-		if nbr_runs == 0:
-			global digital
-			digital = Digital(account = account)
-
 		for model_name, prediction in predictions.items():
 			trade_signal = get_rapprochement_v2(y_pred = [prediction], rappr = the_rappr)[0]
 
@@ -2291,10 +2293,13 @@ def manage(account,
 	compute the balance_sheets of \nall those df_results in order \
 	to avoid to add the time delta.\n")
 
-		### SIGNAL THE ENDING OF CODE:
-		###___________________________
-		# print_style("\n\tFinished", color = good_color, bold = bold)
-		nbr_runs += 1
+	### SIGNAL THE ENDING OF CODE:
+	###___________________________
+	# print_style("\n\tFinished", color = good_color, bold = bold)
+
+	### INCREMENT THE NBR_RUNS:
+	###________________________
+	nbr_runs += 1
 
 
 

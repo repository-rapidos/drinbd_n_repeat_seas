@@ -2033,10 +2033,13 @@ def manage(test_nbr,
 			for idx, res in enumerate(all_results['df_total']):
 				print(res)
 
-		### SIGNAL THE ENDING OF CODE:
-		###___________________________
-		# print_style("\n\tFinished", color = good_color, bold = bold)
-		nbr_runs += 1
+	### SIGNAL THE ENDING OF CODE:
+	###___________________________
+	# print_style("\n\tFinished", color = good_color, bold = bold)
+
+	### INCREMENT THE NBR_RUNS:
+	###________________________
+	nbr_runs += 1
 
 
 
