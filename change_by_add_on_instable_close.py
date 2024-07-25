@@ -2217,10 +2217,13 @@ def manage(account,
 				# print("\nThe actual Y_pred :", df_results['y_pred'].tolist()[-1], "\n")
 				predictions.update({model_name:df_results['y_pred'].tolist()[-2]})
 
-		### SIGNAL THE ENDING OF CODE:
-		###___________________________
-		# print_style("\n\tFinished", color = good_color, bold = bold)
-		nbr_runs += 1
+	### SIGNAL THE ENDING OF CODE:
+	###___________________________
+	# print_style("\n\tFinished", color = good_color, bold = bold)
+
+	### INCREMENT THE NBR_RUNS:
+	###________________________
+	nbr_runs += 1
 
 
 

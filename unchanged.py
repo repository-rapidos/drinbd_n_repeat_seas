@@ -2306,10 +2306,14 @@ def manage(account,
 	# compute the balance_sheets of \nall those df_results in order \
 	# to avoid to add the time delta.\n")
 
-		### SIGNAL THE ENDING OF CODE:
-		###___________________________
-		# print_style("\n\tFinished", color = good_color, bold = bold)
-		nbr_runs += 1
+	### SIGNAL THE ENDING OF CODE:
+	###___________________________
+	# print_style("\n\tFinished", color = good_color, bold = bold)
+
+
+	### INCREMENT THE NBR_RUNS:
+	###________________________
+	nbr_runs += 1
 
 
 
