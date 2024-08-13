@@ -1775,8 +1775,6 @@ def get_amount_2_trade(account, trade_fxd_amount_risk_fact):
 	# ### 				"risk_factor":100, ### None
 	# ### 			}
 	"""
-	if trade_fxd_amount_risk_fact['fixed_amount'] is not None:
-		assert trade_fxd_amount_risk_fact['fixed_amount'] >= 1, "trade_fxd_amount_risk_fact['fixed_amount'] >= 1"
 	if trade_fxd_amount_risk_fact['fixed_amount'] == None and trade_fxd_amount_risk_fact['risk_factor'] == None:
 		# print("CASE 1")
 		return 1.0
@@ -2320,7 +2318,12 @@ def manage(test_nbr,
 	### df_tail and df_head must not be different of None simultaneously:
 	### the can be None simultaneously or
 	### if one of them is None the other shall not
+
 	assert len_test >= last_data + 100, 'len_test >= last_data + 100'
+	
+	if trade_fxd_amount_risk_fact['fixed_amount'] is not None:
+		assert trade_fxd_amount_risk_fact['fixed_amount'] >= 1.0, "trade_fxd_amount_risk_fact['fixed_amount'] >= 1.0"
+
 	assert df_head is None or df_tail is None, '"df_head" and "df_tail" must not be != None simultaneously !'
 	assert df_head is None or slice_df_index is None, '"df_head" and "slice_df_index" must not be != None simultaneously !'
 	assert df_tail is None or slice_df_index is None, '"df_tail" and "slice_df_index" must not be != None simultaneously !'
