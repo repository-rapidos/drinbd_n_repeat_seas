@@ -2912,7 +2912,10 @@ def manage(test_nbr,
 			print_style("\n\tFinished", color = good_color, bold = bold)
 	
 	elif not coherence_minutes:
-		print_style("Incoherence minute !!!", color = alert_color, bold = bold)
+		print("\n")
+		for _ in range(5):
+			print_style("Incoherence minute !!!", color = alert_color, bold = bold)
+		print("\n")
 	
 	### INCREMENT THE NBR_RUNS:
 	###________________________
