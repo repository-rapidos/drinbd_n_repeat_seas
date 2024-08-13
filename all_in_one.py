@@ -2725,7 +2725,9 @@ def manage(test_nbr,
 			### WE SHALL FIRST DELETE THE MODEL IF IT IS IN DRIVE, 
 			### IN CASE WHERE IT CAN BE THE MODEL INCOMPLETE FITTED:
 			model_filename = f'model_test_nbr_{test_nbr}.h5'
-			os.remove(gdrive_folder_path + model_filename)
+
+			if check_file_exists(filepath = gdrive_folder_path + model_filename)
+				os.remove(gdrive_folder_path + model_filename)
 
 			### THEN WE CAN DOWNLOAD THE COMPLETELY FITTED MODEL:
 			result_download_model = direct_download_file(
