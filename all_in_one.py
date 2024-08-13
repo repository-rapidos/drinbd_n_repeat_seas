@@ -2726,7 +2726,7 @@ def manage(test_nbr,
 			### IN CASE WHERE IT CAN BE THE MODEL INCOMPLETE FITTED:
 			model_filename = f'model_test_nbr_{test_nbr}.h5'
 
-			if check_file_exists(filepath = gdrive_folder_path + model_filename)
+			if check_file_exists(filepath = gdrive_folder_path + model_filename):
 				os.remove(gdrive_folder_path + model_filename)
 
 			### THEN WE CAN DOWNLOAD THE COMPLETELY FITTED MODEL:
