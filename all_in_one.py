@@ -2910,7 +2910,10 @@ def manage(test_nbr,
 			### SIGNAL THE ENDING OF CODE:
 			###___________________________
 			print_style("\n\tFinished", color = good_color, bold = bold)
-
+	
+	elif not coherence_minutes:
+		print_style("Incoherence minute !!!", color = alert_color, bold = bold)
+	
 	### INCREMENT THE NBR_RUNS:
 	###________________________
 	nbr_runs += 1
