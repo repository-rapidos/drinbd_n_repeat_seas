@@ -20,8 +20,6 @@ mais ici il y a de nombreuses modifications.
 
 """
 
-!pip install tensorflow==2.15.0
-
 ###################################
 ########## SECTION MAIN VARIABLES:
 
