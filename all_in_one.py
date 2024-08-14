@@ -2407,11 +2407,15 @@ def manage(test_nbr,
 		if just_run_1:
 			verbose_download_candles = True
 
-		additive_df = get_big_data_candles(account = account, 
-							pair = "EURUSD", 
-							timeframe = 60, 
-							start_timestamp = new_start_timestamp, 
-							verbose = verbose_download_candles)
+		while True:
+			additive_df = get_big_data_candles(account = account, 
+								pair = "EURUSD", 
+								timeframe = 60, 
+								start_timestamp = new_start_timestamp, 
+								verbose = verbose_download_candles)
+
+			if 	int(additive_df.tail(1)['date_from'].tolist()[-1].split(" ")[-1].split(":")[1]) == int(datetime.datetime.now().minute):
+				break
 
 		assert big_df.tail(1)['date_from'].tolist()[0] == additive_df.head(1)['date_from'].tolist()[0], "big_df.tail(1)['date_from'].tolist()[0] == additive_df.head(1)['date_from'].tolist()[0]"
 
