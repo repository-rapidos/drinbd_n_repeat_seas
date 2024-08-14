@@ -1843,6 +1843,8 @@ def signal_2_trade(
 			while True:
 				staying_time = 26 - datetime.datetime.now().second
 				if staying_time <= 1.5:
+					print(datetime.datetime.fromtimestamp(int(time.time())))
+					print("TRADE CAN'T BE PASSED ON THIS MINUTE BECAUSE WE ARE OUT TIME.")
 					break
 				else: ### so if staying_time > 1.5:
 					actual_close = get_actual_price(account = account, 
