@@ -2898,12 +2898,14 @@ def manage(test_nbr,
 			]
 
 			print("\n")
+			# all_urls = []
 			for result_filename in result_filenames:
 				result_upload = direct_upload_file(
 					local_file_path_name = gdrive_folder_path + result_filename, 
 					cloud_file_path_name = results_cloud_path + result_filename,
 					)
 
+				# all_urls.append(result_upload)
 				if result_upload:
 					print_style(f"Successfully upload result file: {result_filename}:\n\t{result_upload}",
 						color = good_color, bold = bold)
@@ -2911,6 +2913,12 @@ def manage(test_nbr,
 					print_style(f"\nResult file {result_filename} wasn't uploaded !!!\n",
 						color = alert_color, bold = bold)
 			print("\n")
+
+			# all_urls_filename = gdrive_folder_path + test_nbr + ".txt"
+			# with open(all_urls_filename, "a", encoding = "utf-8") as f:
+			# 	for url_ in all_urls:
+			# 		f.write(f"{url_}\n")
+			# files.download(all_urls_filename)
 
 		if run_type != "realtime":
 			### SIGNAL THE ENDING OF CODE:
