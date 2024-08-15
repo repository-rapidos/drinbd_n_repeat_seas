@@ -700,6 +700,48 @@ if exec_environment == 'Colab':
 				print("Staying time           :", round(staying_time/60, 3), "Minutes or", round(staying_time/3600, 3), "Hours")
 				print("\n")
 
+			### SAVE LANDMARKS:
+			###################
+			try:
+				with open('landmarks_saved_at.txt', 'r') as f:
+					landmarks_saved_at = f.readlines()
+				landmarks_saved_at = [v.strip() for v in landmarks_saved_at]
+				assert len(landmarks_saved_at) == 1, "len(landmarks_saved_at) == 1"
+				landmarks_saved_at = float(landmarks_saved_at[-1])
+				delta_time_save_landmarks = time.time() - landmarks_saved_at
+				if delta_time_save_landmarks < 60: ### landmarks will be sent to firebase each 60 seconds (or more), but not less.					
+					can_save_landmarks = False
+				else:
+					can_save_landmarks = True
+			except FileNotFoundError:
+				can_save_landmarks = True
+
+			if can_save_landmarks:
+				try:
+					filenames_to_send = [
+								f'prev_epochs_test_nbr_{test_nbr}.txt',
+								f'model_test_nbr_{test_nbr}.h5',
+								f'history_test_nbr_{test_nbr}.pkl',
+								f'log_fitting_test_nbr_{test_nbr}.txt'
+								]
+
+					sent_2_firebase_storage = 0
+					for filename_to_send in filenames_to_send:
+						res = firebase_storage.upload_file(local_file_path_name = gdrive_folder_path + filename_to_send, 
+															cloud_file_path_name = landmarks_cloud_path + filename_to_send
+															)
+
+						if res:
+							print_style(f"\tLandmark file {filename_to_send} successfully sent to firebase storage:\n\t{res}\n", color = 'cyan')
+							sent_2_firebase_storage += 1
+						else:
+							print_style(f"\tNo landmark file named : {filename_to_send} in Google Drive.\n", color = 'cyan')
+
+					with open('landmarks_saved_at.txt', 'w') as f:
+						f.write(f"{time.time()}\n")
+				except:
+					pass
+
 
 def fit_n_save_model(X_train, y_train,
 					epochs, test_nbr,
@@ -2324,6 +2366,9 @@ def manage(test_nbr,
 	if trade_fxd_amount_risk_fact['fixed_amount'] is not None:
 		assert trade_fxd_amount_risk_fact['fixed_amount'] >= 1.0, "trade_fxd_amount_risk_fact['fixed_amount'] >= 1.0"
 
+	if run_type == "realtime":
+		df_head = None
+
 	assert df_head is None or df_tail is None, '"df_head" and "df_tail" must not be != None simultaneously !'
 	assert df_head is None or slice_df_index is None, '"df_head" and "slice_df_index" must not be != None simultaneously !'
 	assert df_tail is None or slice_df_index is None, '"df_tail" and "slice_df_index" must not be != None simultaneously !'
@@ -2713,17 +2758,17 @@ def manage(test_nbr,
 
 		print("\n")
 		for filename_landmark in filenames_landmarks:
-			if not check_file_exists(gdrive_folder_path + filename_landmark):
-				result_downloading = direct_download_file(
-					cloud_file_path_name = landmarks_cloud_path + filename_landmark, 
-					local_file_path_name = gdrive_folder_path + filename_landmark)
+			# ### if not check_file_exists(gdrive_folder_path + filename_landmark):
+			result_downloading = direct_download_file(
+				cloud_file_path_name = landmarks_cloud_path + filename_landmark, 
+				local_file_path_name = gdrive_folder_path + filename_landmark)
 
-				if result_downloading:
-					print_style(f"Successfully downloaded {filename_landmark}", 
-						color = good_color, bold = bold)
-				else:
-					print_style(f"File not downloaded: {filename_landmark}",
-						color = alert_color, bold = bold)
+			if result_downloading:
+				print_style(f"Successfully downloaded {filename_landmark}", 
+					color = good_color, bold = bold)
+			else:
+				print_style(f"File not downloaded: {filename_landmark}",
+					color = alert_color, bold = bold)
 		print("\n")
 
 	elif run_type != "fitting": ### when it is backtest or realtime
