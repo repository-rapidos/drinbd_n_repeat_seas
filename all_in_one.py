@@ -648,7 +648,7 @@ if exec_environment == 'Colab':
 	class EachEpochCallback(keras.callbacks.Callback):
 		def __init__(self, verbose_epoch_in_callback, 
 			epochs, history_filepath, save_prev_epochs_filepath, 
-			loss_n_val_loss, log_fitting_filepath):
+			loss_n_val_loss, log_fitting_filepath, test_nbr):
 			
 			self.durations = []
 			self.verbose_epoch_in_callback = verbose_epoch_in_callback
@@ -657,6 +657,7 @@ if exec_environment == 'Colab':
 			self.save_prev_epochs_filepath = save_prev_epochs_filepath
 			self.log_fitting_filepath = log_fitting_filepath
 			self.loss_n_val_loss = loss_n_val_loss
+			self.test_nbr = test_nbr
 		
 		def on_epoch_begin(self, epoch, logs=None):
 			self.now = time.time()
@@ -719,10 +720,10 @@ if exec_environment == 'Colab':
 			if can_save_landmarks:
 				try:
 					filenames_to_send = [
-								f'prev_epochs_test_nbr_{test_nbr}.txt',
-								f'model_test_nbr_{test_nbr}.h5',
-								f'history_test_nbr_{test_nbr}.pkl',
-								f'log_fitting_test_nbr_{test_nbr}.txt'
+								f'prev_epochs_test_nbr_{self.test_nbr}.txt',
+								f'model_test_nbr_{self.test_nbr}.h5',
+								f'history_test_nbr_{self.test_nbr}.pkl',
+								f'log_fitting_test_nbr_{self.test_nbr}.txt'
 								]
 
 					sent_2_firebase_storage = 0
@@ -857,7 +858,8 @@ def fit_n_save_model(X_train, y_train,
 										epochs = epochs, history_filepath = history_filepath, 
 										save_prev_epochs_filepath = save_prev_epochs_filepath, 
 										loss_n_val_loss = loss_n_val_loss,
-										log_fitting_filepath = log_fitting_filepath)
+										log_fitting_filepath = log_fitting_filepath,
+										test_nbr = test_nbr)
 
 	model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath = model_filepath,
 																monitor = 'loss',
