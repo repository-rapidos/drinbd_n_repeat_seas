@@ -1845,6 +1845,7 @@ def signal_2_trade(
 	prediction: float,
 	the_rappr,
 	signal: str, # "call", "put", "neutral" 
+	test_nbr,
 	# pass_only_call_or_put, 
 	# pass_only_specific_parity: str, 
 	digital_instance, 
@@ -1939,11 +1940,32 @@ def signal_2_trade(
 				os.mkdir(trades_logs_filepath)
 			except:
 				pass
-			trades_logs_filename = trades_logs_filepath + f"trades_logs_run_id_{run_id}.csv"
+			trades_logs_filename = trades_logs_filepath + f"trades_logs-test_nbr_{test_nbr}-run_id_{run_id}.csv"
 			df_csv_saver_append(df = df_trade_logs, 
 							filename = trades_logs_filename)
 			#################################################
 			check = False
+
+		##### GET TRADES HISTORY:
+		history_node_filepath = f"/content/drive/MyDrive/history_node/"	
+		try:
+			os.mkdir(history_node_filepath)
+		except:
+			pass
+		history_node_filename = history_node_filepath + f"history_node-test_nbr_{test_nbr}-run_id_{run_id}.pkl"
+
+		try:
+			previous_data_history_node = load_pickle(
+											filepath = history_node_filename)
+		except FileNotFoundError:
+			previous_data_history_node = []
+
+		new_history_node = digital_instance.get_history(nbr_data = 10)['history_node']
+		history_node_2_add = [d for d in new_history_node if d not in previous_data_history_node]
+		history_node_2_save = previous_data_history_node + history_node_2_add
+		save_pickle(filepath = history_node_filename, 
+					data = history_node_2_save)
+		
 
 ###################################
 ########## SECTION MANAGE:
@@ -2889,6 +2911,7 @@ def manage(test_nbr,
 						prediction = prediction,
 						the_rappr = rappr_get_signal,
 						signal = signal,
+						test_nbr = test_nbr,
 						digital_instance = digital_instance, 
 						wait_right_point = wait_right_point_to_trade, 
 						amount = amount, 
