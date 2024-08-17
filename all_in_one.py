@@ -2485,7 +2485,9 @@ def manage(test_nbr,
 								start_timestamp = new_start_timestamp, 
 								verbose = verbose_download_candles)
 
-			if 	int(additive_df.tail(1)['date_from'].tolist()[-1].split(" ")[-1].split(":")[1]) == int(datetime.datetime.now().minute):
+			if int(additive_df.tail(1)['date_from'].tolist()[-1].split(" ")[-1].split(":")[1]) == int(datetime.datetime.now().minute):
+				break
+			if run_type != "realtime":
 				break
 
 		assert big_df.tail(1)['date_from'].tolist()[0] == additive_df.head(1)['date_from'].tolist()[0], "big_df.tail(1)['date_from'].tolist()[0] == additive_df.head(1)['date_from'].tolist()[0]"
