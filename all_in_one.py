@@ -1843,23 +1843,45 @@ def get_amount_2_trade(account, trade_fxd_amount_risk_fact):
 
 def signal_2_trade(
 	prediction: float,
-	the_rappr,
 	signal: str, # "call", "put", "neutral" 
-	test_nbr,
+	wait_right_point:bool, 
+	test_nbr, 
+	the_rappr, 
 	# pass_only_call_or_put, 
 	# pass_only_specific_parity: str, 
 	digital_instance, 
-	wait_right_point:bool, 
 	amount, 
 	account, 
 	minimal_balance_tradable, 
 	verbose_trades_pass, 
-	run_id,
-	last_data,
-	currency_pair = "EURUSD",
-	candles_timeframe = 60,
+	run_id, 
+	last_data, 
+	runs_realtime, 
+	total_runs_realtime, 
+	currency_pair = "EURUSD", 
+	candles_timeframe = 60, 
 	expiration = 1):
 	
+
+	def add_history_node(history_node_filename, trades_logs_filename, digital_instance):
+		try:
+			previous_data_history_node = load_pickle(
+											filepath = history_node_filename)
+		except FileNotFoundError:
+			previous_data_history_node = []
+		#################
+		try:
+			loaded_df_trade_logs = pd.read_csv(trades_logs_filename)
+			referal_ids = loaded_df_trade_logs['Trade id'].tolist()
+		except:
+			referal_ids = []
+		#################
+		new_history_node = digital_instance.get_history(nbr_data = 10)['history_node']
+		history_node_2_add = [d for d in new_history_node if d not in previous_data_history_node and d['raw_event']['order_ids'][0] in referal_ids]
+		history_node_2_save = previous_data_history_node + history_node_2_add
+		save_pickle(filepath = history_node_filename, 
+					data = history_node_2_save)
+
 	def get_actual_price(account, currency_pair, candles_timeframe = 60, nbr_candles = 1):
 		return get_small_data_candles(account = account, 
 									pair = currency_pair, 
@@ -1931,7 +1953,7 @@ def signal_2_trade(
 						"Actual Candle Open":[actual_open],
 						"Quote On Trade Taken":[quote_on_trade_taken],
 						})
-			
+
 			if verbose_trades_pass and check:
 				print(df_trade_logs, "\n")
 			
@@ -1943,6 +1965,15 @@ def signal_2_trade(
 			trades_logs_filename = trades_logs_filepath + f"trades_logs-test_nbr_{test_nbr}-run_id_{run_id}.csv"
 			df_csv_saver_append(df = df_trade_logs, 
 							filename = trades_logs_filename)
+			
+			# ###>>>>>>>
+			# df_trade_logs___ = pd.read_csv(trades_logs_filename)
+			# print(df_trade_logs___[["Trade taken on", "Trade id"]])
+
+			# IDS_1 = df_trade_logs___['Trade id'].tolist()
+			# ###>>>>>>>
+			# print("IDS_1 :", IDS_1)
+
 			#################################################
 			check = False
 
@@ -1953,19 +1984,79 @@ def signal_2_trade(
 		except:
 			pass
 		history_node_filename = history_node_filepath + f"history_node-test_nbr_{test_nbr}-run_id_{run_id}.pkl"
+		add_history_node(history_node_filename = history_node_filename, 
+						trades_logs_filename = trades_logs_filename, 
+						digital_instance = digital_instance)
+
+		# try:
+		# 	previous_data_history_node = load_pickle(
+		# 									filepath = history_node_filename)
+		# except FileNotFoundError:
+		# 	previous_data_history_node = []
+
+		# try:
+		# 	loaded_df_trade_logs = pd.read_csv(trades_logs_filename)
+		# 	referal_ids = loaded_df_trade_logs['Trade id'].tolist()
+		# except:
+		# 	referal_ids = []
+		# new_history_node = digital_instance.get_history(nbr_data = 10)['history_node']
+		# history_node_2_add = [d for d in new_history_node if d not in previous_data_history_node and d['raw_event']['order_ids'][0] in referal_ids]
+		# history_node_2_save = previous_data_history_node + history_node_2_add
+		# save_pickle(filepath = history_node_filename, 
+		# 			data = history_node_2_save)
+		
+		# ###>>>>>>>
+		# try:
+		# 	history_node_saved = load_pickle(history_node_filename)
+		# 	IDS_2 = [v['raw_event']['order_ids'][0] for v in history_node_saved]
+		# 	create_at_ = [datetime.datetime.fromtimestamp(v['raw_event']['create_at']/1000) for v in history_node_saved]
+		# 	# print("IDS_2 :", IDS_2)
+		# 	for id_2, create_at_ in zip(IDS_2, create_at_):
+		# 		print("Id 2: ", id_2, " create_at_ :", create_at_)
+		# 	print("\n")
+		# except:
+		# 	pass
+
+		# ###>>>>>>>
+		# try:
+		# 	IDS_3 = [v for v in IDS_2 if v in IDS_1]
+		# 	print("IDS_3 :", IDS_3, "\n")
+		# except:
+		# 	pass
+
+
+	################
+	if runs_realtime+1 == total_runs_realtime:
+		print_style("Please wait for (75 seconds) the last trade to finish before ending of code",
+						color = "cyan")
+		time.sleep(75)
+
+		add_history_node(history_node_filename = history_node_filename, 
+						trades_logs_filename = trades_logs_filename, 
+						digital_instance = digital_instance)
+		# try:
+		# 	loaded_df_trade_logs = pd.read_csv(trades_logs_filename)
+		# 	referal_ids = loaded_df_trade_logs['Trade id'].tolist()
+		# except:
+		# 	referal_ids = []
+		# new_history_node = digital_instance.get_history(nbr_data = 10)['history_node']
+		# history_node_2_add = [d for d in new_history_node if d not in previous_data_history_node and d['raw_event']['order_ids'][0] in referal_ids]
+		# history_node_2_save = previous_data_history_node + history_node_2_add
+		# save_pickle(filepath = history_node_filename, 
+		# 			data = history_node_2_save)
 
 		try:
-			previous_data_history_node = load_pickle(
-											filepath = history_node_filename)
+			files.download(trades_logs_filename)
 		except FileNotFoundError:
-			previous_data_history_node = []
+			print_style(f"File {trades_logs_filename} not found in Google Drive !!!", 
+				color = alert_color, bold = bold)
 
-		new_history_node = digital_instance.get_history(nbr_data = 10)['history_node']
-		history_node_2_add = [d for d in new_history_node if d not in previous_data_history_node]
-		history_node_2_save = previous_data_history_node + history_node_2_add
-		save_pickle(filepath = history_node_filename, 
-					data = history_node_2_save)
-		
+		try:
+			files.download(history_node_filename)
+		except FileNotFoundError:
+			print_style(f"File {history_node_filename} not found in Google Drive !!!",
+				color = alert_color, bold = bold)
+
 
 ###################################
 ########## SECTION MANAGE:
@@ -2330,6 +2421,9 @@ def manage(test_nbr,
 		minimal_balance_tradable,
 		verbose_trades_pass,
 		wait_right_point_to_trade:bool,
+		runs_realtime = 0,
+		total_runs_realtime = 1_000_000,
+		trade_2_first_minutes = False,
 		start_df_on_datetime_from = None,
 		# ### df_tail_balance_sheet = None, 
 		len_df_get_seas = 19_999,
@@ -2908,7 +3002,21 @@ def manage(test_nbr,
 
 				### PASS TRADE:
 				###____________
-				if nbr_runs > 1:
+
+				# if trade_2_first_minutes:
+				# 	cond_signal_2_trade = True
+				# else:
+				# 	if nbr_runs > 1:
+				# 		cond_signal_2_trade = True
+				# 	else:
+				# 		cond_signal_2_trade = False
+
+				cond_signal_2_trade = True
+				if (not trade_2_first_minutes and nbr_runs <= 1) or (datetime.datetime.now().second >= 25):
+					cond_signal_2_trade = False
+
+				# ### if nbr_runs > 1:
+				if cond_signal_2_trade:
 					signal_2_trade(
 						prediction = prediction,
 						the_rappr = rappr_get_signal,
@@ -2922,6 +3030,8 @@ def manage(test_nbr,
 						verbose_trades_pass = verbose_trades_pass, 
 						run_id = run_id,
 						last_data = last_data,
+						runs_realtime = runs_realtime,
+						total_runs_realtime = total_runs_realtime,
 						# currency_pair = "EURUSD",
 						# candles_timeframe = 60,
 						# expiration = 1
@@ -2996,6 +3106,12 @@ def manage(test_nbr,
 			### SIGNAL THE ENDING OF CODE:
 			###___________________________
 			print_style("\n\tFinished", color = good_color, bold = bold)
+
+		if run_type == "realtime" and runs_realtime+1 == total_runs_realtime:
+			files.download(df_results_realtime_filename)
+
+			print_style("\n\tFINISHED", color = informative_color)
+
 	
 	elif not coherence_minutes:
 		print("\n")
