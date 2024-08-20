@@ -2165,9 +2165,7 @@ def get_df_started_on_datetime_from(df, start_df_on_datetime_from):
 	if start_df_on_datetime_from is not None:
 		index_start_df_on_datetime_from = df[df["date_from"] == start_df_on_datetime_from].index.tolist()
 		assert len(index_start_df_on_datetime_from) == 1, "len(index_start_df_on_datetime_from) == 1"
-		index_start_df_on_datetime_from = index_start_df_on_datetime_from[0]
-		data_to_delete = index_start_df_on_datetime_from
-		df = df.tail(df.shape[0] - data_to_delete)
+		df = df.tail(df.shape[0] - index_start_df_on_datetime_from[0])
 		df.reset_index(inplace = True, drop = True)
 	return df
 
@@ -2202,10 +2200,7 @@ def get_df_start_end_on_date_from(df, start = None, end = None):
 		f"Pour la valeur de start time {start} veuillez choisir une date qui ne coincide pas avec le Samedi ou le Dimanche."
 		index_start = df[df["date_from"] == start].index.tolist()
 		assert len(index_start) == 1, "len(index_start) == 1"
-		index_start = index_start[0]
-		# print("index_start :", index_start)
-		data_to_delete = index_start
-		df = df.tail(df.shape[0] - data_to_delete)
+		df = df.tail(df.shape[0] - index_start[0])
 		df.reset_index(inplace = True, drop = True)
 		# print(df, "\n")
 	if end is not None:
@@ -2215,8 +2210,7 @@ def get_df_start_end_on_date_from(df, start = None, end = None):
 		index_end = df[df['date_from'] == end].index.tolist()
 		assert len(index_end) == 1, "len(index_end) == 1"
 		index_end = index_end[0]
-		data_to_delete_2 = index_end + 1
-		df = df.head(data_to_delete_2)
+		df = df.head(index_end + 1)
 		# print("index_end :", index_end)
 		# print(df)
 	return df
