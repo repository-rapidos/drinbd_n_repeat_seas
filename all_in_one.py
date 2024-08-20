@@ -2171,6 +2171,57 @@ def get_df_started_on_datetime_from(df, start_df_on_datetime_from):
 		df.reset_index(inplace = True, drop = True)
 	return df
 
+def get_df_start_end_on_date_from(df, start = None, end = None):
+	def from_datetime_str_2_weekday(datetime_str):
+		assert isinstance(datetime_str, str), "isinstance(datetime_str, str)"
+		_year = int(datetime_str.split(" ")[0].split("-")[0])
+		_month = int(datetime_str.split(" ")[0].split("-")[1])
+		_day = int(datetime_str.split(" ")[0].split("-")[2])
+		_hour = int(datetime_str.split(" ")[1].split(":")[0])
+		_minute = int(datetime_str.split(" ")[1].split(":")[1])
+		_second = int(datetime_str.split(" ")[1].split(":")[2])
+		return datetime.datetime(_year, _month, _day, _hour, _minute, _second).weekday()
+
+	def datetime_str_2_timestamp(datetime_str):
+		assert isinstance(datetime_str, str), "isinstance(datetime_str, str)"
+		_year = int(datetime_str.split(" ")[0].split("-")[0])
+		_month = int(datetime_str.split(" ")[0].split("-")[1])
+		_day = int(datetime_str.split(" ")[0].split("-")[2])
+		_hour = int(datetime_str.split(" ")[1].split(":")[0])
+		_minute = int(datetime_str.split(" ")[1].split(":")[1])
+		_second = int(datetime_str.split(" ")[1].split(":")[2])
+		return datetime.datetime(_year, _month, _day, _hour, _minute, _second).timestamp()
+	df = df.copy()
+	df.reset_index(inplace = True, drop = True)
+
+	if start is not None and end is not None:
+		assert datetime_str_2_timestamp(start) < datetime_str_2_timestamp(end), "datetime_str_2_timestamp(start) < datetime_str_2_timestamp(end)"
+
+	if start is not None:
+		assert (from_datetime_str_2_weekday(start) != 5) and (from_datetime_str_2_weekday(start) != 6), \
+		f"Pour la valeur de start time {start} veuillez choisir une date qui ne coincide pas avec le Samedi ou le Dimanche."
+		index_start = df[df["date_from"] == start].index.tolist()
+		assert len(index_start) == 1, "len(index_start) == 1"
+		index_start = index_start[0]
+		# print("index_start :", index_start)
+		data_to_delete = index_start
+		df = df.tail(df.shape[0] - data_to_delete)
+		df.reset_index(inplace = True, drop = True)
+		# print(df, "\n")
+	if end is not None:
+		assert (from_datetime_str_2_weekday(end) != 5) and (from_datetime_str_2_weekday(end) != 6), \
+		f"Pour la valeur de end time {end} veuillez choisir une date qui ne coincide pas avec le Samedi ou le Dimanche."
+		# print(df)
+		index_end = df[df['date_from'] == end].index.tolist()
+		assert len(index_end) == 1, "len(index_end) == 1"
+		index_end = index_end[0]
+		data_to_delete_2 = index_end + 1
+		df = df.head(data_to_delete_2)
+		# print("index_end :", index_end)
+		# print(df)
+	return df
+
+
 def check_coherence_df_spliting(just_run_1,
 				df_train,
 				df_test,
@@ -2425,6 +2476,7 @@ def manage(test_nbr,
 		total_runs_realtime = 1_000_000,
 		trade_2_first_minutes = False,
 		start_df_on_datetime_from = None,
+		end_df_on_datetime_from = None,
 		# ### df_tail_balance_sheet = None, 
 		len_df_get_seas = 19_999,
 		df_head = None,
@@ -2634,12 +2686,21 @@ def manage(test_nbr,
 		good_color = None
 		bold = False
 
-	if start_df_on_datetime_from is not None:
-		df = get_df_started_on_datetime_from(df = df, 
-					start_df_on_datetime_from = start_df_on_datetime_from)
+	# if start_df_on_datetime_from is not None:
+	# 	df = get_df_started_on_datetime_from(df = df, 
+	# 				start_df_on_datetime_from = start_df_on_datetime_from)
+
+	if (start_df_on_datetime_from is not None) or (end_df_on_datetime_from is not None):
+		df = get_df_start_end_on_date_from(df = df, 
+										start = start_df_on_datetime_from, 
+										end = end_df_on_datetime_from)
+
+		if just_run_1:
+			print_style("\nWe applied get_df_start_end_on_date_from !!!\n", 
+						color = good_color, bold = bold)
+			# print(df[['date_from', 'date_to', 'close']], "\n")
 
 	### Print df original:
-
 	if just_run_1:
 		print_style("Df original :", color = informative_color)
 		print_style("_____________", color = informative_color)
