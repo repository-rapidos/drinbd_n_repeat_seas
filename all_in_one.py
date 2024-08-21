@@ -2327,6 +2327,7 @@ def fragmentor_v2(df, len_df_get_seas,
 	### GET TEST DATA:
 	###_____________________________________
 	len_intermediate_2 = df.shape[0] - len_test
+	assert len_intermediate_2 >= 0, "len_intermediate_2 >= 0"
 	df_test = df.tail(len_test)
 	df_test.reset_index(inplace = True, drop = True)
 	check_coherence_df_spliting(just_run_1 = just_run_1,
@@ -3099,10 +3100,12 @@ def manage(test_nbr,
 			# print(df_results, "\n")
 			df_results_realtime_filename = df_results_realtime_filepath + f"df_results_realtime_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
 			df_results_2_save_realtime = df_results.tail(30)
+			df_results_2_save_realtime['frgt_saved_on'] = datetime.datetime.fromtimestamp(int(time.time()))
 			# print("df_results_2_save_realtime")
 			# print(df_results_2_save_realtime, "\n\n")
 			df_results_2_save_realtime.to_csv(df_results_realtime_filename,
-											header = True,
+											header = not check_file_exists(
+												filepath = df_results_realtime_filename),
 											mode = "a",
 											index = False)
 
@@ -3164,9 +3167,7 @@ def manage(test_nbr,
 
 		if run_type == "realtime" and runs_realtime+1 == total_runs_realtime:
 			files.download(df_results_realtime_filename)
-
 			print_style("\n\tFINISHED", color = informative_color)
-
 	
 	elif not coherence_minutes:
 		print("\n")
