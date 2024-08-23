@@ -3035,6 +3035,7 @@ def manage(test_nbr,
 		if run_type == "realtime":
 			### PASS TRADE OR NOT, ACCORDING TO CONDITION:
 			###___________________________________________
+			datetime_2_save_df_res_realtime = datetime.datetime.fromtimestamp(int(time.time()))
 			if pass_trades:
 				### INSTANCIATE THE DIGITAL CLASS:
 				###_______________________________
@@ -3100,7 +3101,7 @@ def manage(test_nbr,
 			# print(df_results, "\n")
 			df_results_realtime_filename = df_results_realtime_filepath + f"df_results_realtime_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
 			df_results_2_save_realtime = df_results.tail(30)
-			df_results_2_save_realtime['frgt_saved_on'] = datetime.datetime.fromtimestamp(int(time.time()))
+			df_results_2_save_realtime['frgt_saved_on'] = datetime_2_save_df_res_realtime
 			# print("df_results_2_save_realtime")
 			# print(df_results_2_save_realtime, "\n\n")
 			df_results_2_save_realtime.to_csv(df_results_realtime_filename,
