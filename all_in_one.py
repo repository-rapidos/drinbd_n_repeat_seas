@@ -2253,10 +2253,10 @@ def check_coherence_df_spliting(just_run_1,
 		print_style('_______________\n', color = informative_color)
 		print_style(f'Length of data getting seasonnality	: {len_df_get_seas}', color = informative_color)
 		print_style(f'Length of intermediate data 1		: {len_intermediate_1}', color = informative_color)
-		print_style(f'Length of train dataframe 		: {len_train}', color = informative_color)
+		print_style(f'Length of train dataframe 			: {len_train}', color = informative_color)
 		print_style(f'Length of intermediate data 2		: {len_intermediate_2}', color = informative_color)
-		print_style(f'Length of test dataframe 		: {len_test}', color = informative_color)
-		print_style(f'Total Length				: {total_length_initial_df}\n', 
+		print_style(f'Length of test dataframe 			: {len_test}', color = informative_color)
+		print_style(f'Total Length						: {total_length_initial_df}\n', 
 														color = good_color, bold = bold)
 		print_style("________________________________________________", color = informative_color)
 		print_style("____________________________________________________", color = informative_color)
