@@ -3168,11 +3168,11 @@ def manage(test_nbr,
 		if run_type != "realtime":
 			### SIGNAL THE ENDING OF CODE:
 			###___________________________
-			print_style("\n\tFinished", color = good_color, bold = bold)
+			print_style(f"\n\tFinished: {test_nbr}", color = good_color, bold = bold)
 
 		if run_type == "realtime" and runs_realtime+1 == total_runs_realtime:
 			files.download(df_results_realtime_filename)
-			print_style("\n\tFINISHED", color = informative_color)
+			print_style(f"\n\tFINISHED: {test_nbr}", color = informative_color)
 	
 	elif not coherence_minutes:
 		print("\n")
