@@ -2489,6 +2489,7 @@ def manage(test_nbr,
 	if run_type != "realtime":
 		just_run_1 = True
 	else: ### run_type == realtime
+		end_df_on_datetime_from = None
 		if nbr_runs == 0:
 			just_run_1 = True
 		else:
