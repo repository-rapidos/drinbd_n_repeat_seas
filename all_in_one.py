@@ -2031,6 +2031,25 @@ def signal_2_trade(
 						color = "cyan")
 		time.sleep(75)
 
+		####################################################
+		####################################################
+		####################################################
+		history_node_filepath = f"/content/drive/MyDrive/history_node/"	
+		try:
+			os.mkdir(history_node_filepath)
+		except:
+			pass
+		history_node_filename = history_node_filepath + f"history_node-test_nbr_{test_nbr}-run_id_{run_id}.pkl"
+		############################################################################
+		trades_logs_filepath = f"/content/drive/MyDrive/trades_logs/"
+		try:
+			os.mkdir(trades_logs_filepath)
+		except:
+			pass
+		trades_logs_filename = trades_logs_filepath + f"trades_logs-test_nbr_{test_nbr}-run_id_{run_id}.csv"
+		####################################################
+		####################################################
+		####################################################
 		add_history_node(history_node_filename = history_node_filename, 
 						trades_logs_filename = trades_logs_filename, 
 						digital_instance = digital_instance)
