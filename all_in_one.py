@@ -1,4 +1,5 @@
 
+
 """
 ALL IN ONE MODALITIES:
 
@@ -2447,8 +2448,23 @@ def compare_close_sens(df_close_1, df_close_2):
 		print_style("______________________________________________________________", color = good_color, bold = bold)
 		print_style("__________________________________________________________________\n", color = good_color, bold = bold)
 
-from google.colab import files
 
+def increase_or_decrease_datetime_str(datetime_str, increase_or_decrease_seconds):
+	assert isinstance(datetime_str, str), "isinstance(datetime_str, str)"
+	splited_items = datetime_str.split(" ")
+	date_items = splited_items[0].split("-")
+	time_items = splited_items[1].split(":")
+	year_ = int(date_items[0])
+	month_ = int(date_items[1])
+	day_ = int(date_items[2])
+	hour_ = int(time_items[0])
+	minute_ = int(time_items[1])
+	second_ = int(time_items[2])
+	timestamp_ = datetime.datetime(year_, month_, day_, hour_, minute_, second_).timestamp()
+	new_datetime = str(datetime.datetime.fromtimestamp(timestamp_ + increase_or_decrease_seconds))
+	return new_datetime
+
+from google.colab import files
 global nbr_runs
 nbr_runs = 0
 def manage(test_nbr,
@@ -2694,7 +2710,8 @@ def manage(test_nbr,
 
 		### GET DATAFRAME TO USE IN THE CONTINUATION OF THE CODE:
 		###______________________________________________________
-		df = total_df_instable_last_close.copy()
+		# ### ___df = total_df_instable_last_close.copy()
+		df = total_df_instable_last_close.head(total_df_instable_last_close.shape[0] - 1)
 
 	elif check_environment() == 'Local_PC':
 		### READ CSV FILE (DATASET) LOCALLY:
@@ -3023,8 +3040,14 @@ def manage(test_nbr,
 		coherence_minutes = True
 	else:
 		os_minute_now = int(datetime.datetime.now().minute)
-		df_last_minute = int(reference_date_open_close.tail(1)['date_from'].tolist()[-1].split(" ")[1].split(":")[1])
-		if df_last_minute == os_minute_now:
+		df_last_date_from = reference_date_open_close.tail(1)['date_from'].tolist()[-1]
+		df_last_date_from_plus_one_minute = increase_or_decrease_datetime_str(
+												datetime_str = df_last_date_from, 
+												increase_or_decrease_seconds = 60)
+		df_last_minute_plus_one = int(
+							df_last_date_from_plus_one_minute.split(" ")[1].split(":")[1]
+							)
+		if df_last_minute_plus_one == os_minute_now:
 			coherence_minutes = True
 		else:
 			coherence_minutes = False
@@ -3047,7 +3070,6 @@ def manage(test_nbr,
 			if run_type == "backtest":
 				files.download(gdrive_folder_path + df_results_filename)
 
-
 		if just_run_1:
 			global df_results_realtime_filepath
 			df_results_realtime_filepath = f"/content/drive/MyDrive/df_results_realtime/"	
@@ -3069,7 +3091,8 @@ def manage(test_nbr,
 
 				### GET PREDICTION:
 				###________________
-				prediction = df_results['y_pred'].tolist()[-2]
+				# #### ____prediction = df_results['y_pred'].tolist()[-2]
+				prediction = df_results['y_pred'].tolist()[-1]
 
 				### GET SIGNAL FROM PREDICTION:
 				###____________________________
