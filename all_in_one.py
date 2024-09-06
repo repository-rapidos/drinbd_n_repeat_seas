@@ -1,5 +1,4 @@
 
-
 """
 ALL IN ONE MODALITIES:
 
@@ -2448,23 +2447,8 @@ def compare_close_sens(df_close_1, df_close_2):
 		print_style("______________________________________________________________", color = good_color, bold = bold)
 		print_style("__________________________________________________________________\n", color = good_color, bold = bold)
 
-
-def increase_or_decrease_datetime_str(datetime_str, increase_or_decrease_seconds):
-	assert isinstance(datetime_str, str), "isinstance(datetime_str, str)"
-	splited_items = datetime_str.split(" ")
-	date_items = splited_items[0].split("-")
-	time_items = splited_items[1].split(":")
-	year_ = int(date_items[0])
-	month_ = int(date_items[1])
-	day_ = int(date_items[2])
-	hour_ = int(time_items[0])
-	minute_ = int(time_items[1])
-	second_ = int(time_items[2])
-	timestamp_ = datetime.datetime(year_, month_, day_, hour_, minute_, second_).timestamp()
-	new_datetime = str(datetime.datetime.fromtimestamp(timestamp_ + increase_or_decrease_seconds))
-	return new_datetime
-
 from google.colab import files
+
 global nbr_runs
 nbr_runs = 0
 def manage(test_nbr,
@@ -2521,10 +2505,15 @@ def manage(test_nbr,
 	global nbr_runs
 	print_style(f"\nRunning number: {nbr_runs}", color = "cyan")
 
-	if run_type != "realtime":
-		just_run_1 = True
-	else: ### run_type == realtime
+	if run_type == "simulate_realtime":
+		pass_trades = False
+
+	if run_type == "realtime":
 		end_df_on_datetime_from = None
+
+	if run_type == "backtest" or run_type == "fitting":
+		just_run_1 = True
+	elif run_type == "realtime" or run_type == "simulate_realtime":
 		if nbr_runs == 0:
 			just_run_1 = True
 		else:
@@ -2580,7 +2569,7 @@ def manage(test_nbr,
 	if slice_df_index is not None:
 		assert isinstance(slice_df_index, tuple), '"slice_df_index" must be a tuple.'
 
-	assert run_type == "realtime" or run_type == "backtest" or run_type == "fitting", 'run_type == "realtime" or run_type == "backtest" or run_type == "fitting"'
+	assert run_type == "realtime" or run_type == "backtest" or run_type == "fitting" or run_type == "simulate_realtime", 'run_type == "realtime" or run_type == "backtest" or run_type == "fitting" or run_type == "simulate_realtime"'
 	# ### INITIALIZE FIREBASE STORAGE:
 	# ### ____________________________
 	# firebase_storage = FirebaseStorage(firebase_config = firebase_config)
@@ -2623,9 +2612,9 @@ def manage(test_nbr,
 		# 					start_timestamp = start_timestamp, 
 		# 					verbose = True)
 
-		if run_type != "realtime":
+		if run_type == "backtest" or run_type == "fitting":
 			just_run_2 = True
-		else: ### run_type == realtime
+		elif run_type == "realtime" or run_type == "simulate_realtime":
 			if nbr_runs == 0 or nbr_runs == 1:
 				just_run_2 = True
 			else:
@@ -2710,7 +2699,7 @@ def manage(test_nbr,
 
 		### GET DATAFRAME TO USE IN THE CONTINUATION OF THE CODE:
 		###______________________________________________________
-		# ### ___df = total_df_instable_last_close.copy()
+		# #### ___df = total_df_instable_last_close.copy()
 		df = total_df_instable_last_close.head(total_df_instable_last_close.shape[0] - 1)
 
 	elif check_environment() == 'Local_PC':
@@ -2761,13 +2750,13 @@ def manage(test_nbr,
 	### ADD TARGET:
 	###____________
 
-	if run_type != "realtime": ## if it is fitting or backtest
+	if run_type == "fitting" or run_type == "backtest":
 		df = add_target_v2(df = df,
 					close_column_name = close_column_name, 
 					target_type = target_type,
 					target_shift = target_shift,
 					ratio_true_trend = ratio_true_trend)
-	else: ## if it is realtime
+	elif run_type == "realtime" or run_type == "simulate_realtime":
 		df['target'] = 0.0
 
 	### HANDLE COLUMNS AND SPLIT TRAIN AND TEST:
@@ -2882,11 +2871,11 @@ def manage(test_nbr,
 	###_______________________________________
 	reference_date_open_close = df_test[['date_from', 'date_to', 'open', 'close']]
 
-	if run_type != 'realtime': ## when it is fitting or backtest
+	if run_type == "backtest" or run_type == "fitting":
 		reference_date_open_close = reference_date_open_close.tail(
 			reference_date_open_close.shape[0] - (look_back - 1)
 			)
-	elif run_type == 'realtime': ## when it is realtime
+	elif run_type == "realtime" or run_type == "simulate_realtime":
 		reference_date_open_close = reference_date_open_close.tail(last_data)
 
 	reference_date_open_close.reset_index(inplace = True, drop = True)
@@ -2923,7 +2912,7 @@ def manage(test_nbr,
 	df_test = df_test[data_cols_names + ['target']]
 	df_test_scaled, df_test_scaled_scaler = data_scaler(df = df_test)
 
-	if run_type == "realtime":
+	if run_type == "realtime" or run_type == "simulate_realtime":
 		df_test_scaled = df_test_scaled.tail(reference_date_open_close.shape[0] + look_back -1)
 
 	### SPLIT X AND Y:
@@ -3065,7 +3054,7 @@ def manage(test_nbr,
 		df_results = pd.concat([df_x_test, df_results_scaled], axis = 1)
 		df_results_filename = f"df_results_test_nbr_{test_nbr}.csv"
 
-		if run_type != "realtime": ### if it is backtest or fitting
+		if run_type == "backtest" or run_type == "fitting":
 			df_results.to_csv(gdrive_folder_path + df_results_filename, index = False)
 			if run_type == "backtest":
 				files.download(gdrive_folder_path + df_results_filename)
@@ -3078,7 +3067,7 @@ def manage(test_nbr,
 			except:
 				pass
 
-		if run_type == "realtime":
+		if run_type == "realtime" or run_type == "simulate_realtime":
 			### PASS TRADE OR NOT, ACCORDING TO CONDITION:
 			###___________________________________________
 			datetime_2_save_df_res_realtime = datetime.datetime.fromtimestamp(int(time.time()))
@@ -3093,7 +3082,7 @@ def manage(test_nbr,
 				###________________
 				# #### ____prediction = df_results['y_pred'].tolist()[-2]
 				prediction = df_results['y_pred'].tolist()[-1]
-
+				
 				### GET SIGNAL FROM PREDICTION:
 				###____________________________
 				signal = get_signal(prediction = prediction, 
@@ -3208,14 +3197,15 @@ def manage(test_nbr,
 			# 		f.write(f"{url_}\n")
 			# files.download(all_urls_filename)
 
-		if run_type != "realtime":
+		if run_type != "realtime" and run_type != "simulate_realtime":
 			### SIGNAL THE ENDING OF CODE:
 			###___________________________
 			print_style(f"\n\tFinished: {test_nbr}", color = good_color, bold = bold)
 
-		if run_type == "realtime" and runs_realtime+1 == total_runs_realtime:
-			files.download(df_results_realtime_filename)
-			print_style(f"\n\tFINISHED: {test_nbr}", color = informative_color)
+		if runs_realtime+1 == total_runs_realtime:
+			if run_type == "realtime" or run_type == "simulate_realtime":
+				files.download(df_results_realtime_filename)
+				print_style(f"\n\tFINISHED: {test_nbr}", color = informative_color)
 	
 	elif not coherence_minutes:
 		print("\n")
