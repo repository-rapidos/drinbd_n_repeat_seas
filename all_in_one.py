@@ -2447,8 +2447,22 @@ def compare_close_sens(df_close_1, df_close_2):
 		print_style("______________________________________________________________", color = good_color, bold = bold)
 		print_style("__________________________________________________________________\n", color = good_color, bold = bold)
 
-from google.colab import files
+def increase_or_decrease_datetime_str(datetime_str, increase_or_decrease_seconds):
+	assert isinstance(datetime_str, str), "isinstance(datetime_str, str)"
+	splited_items = datetime_str.split(" ")
+	date_items = splited_items[0].split("-")
+	time_items = splited_items[1].split(":")
+	year_ = int(date_items[0])
+	month_ = int(date_items[1])
+	day_ = int(date_items[2])
+	hour_ = int(time_items[0])
+	minute_ = int(time_items[1])
+	second_ = int(time_items[2])
+	timestamp_ = datetime.datetime(year_, month_, day_, hour_, minute_, second_).timestamp()
+	new_datetime = str(datetime.datetime.fromtimestamp(timestamp_ + increase_or_decrease_seconds))
+	return new_datetime
 
+from google.colab import files
 global nbr_runs
 nbr_runs = 0
 def manage(test_nbr,
