@@ -3060,12 +3060,20 @@ def manage(test_nbr,
 				files.download(gdrive_folder_path + df_results_filename)
 
 		if just_run_1:
-			global df_results_realtime_filepath
-			df_results_realtime_filepath = f"/content/drive/MyDrive/df_results_realtime/"	
-			try:
-				os.mkdir(df_results_realtime_filepath)
-			except:
-				pass
+			if run_type == "realtime":
+				global df_results_realtime_filepath
+				df_results_realtime_filepath = f"/content/drive/MyDrive/df_results_realtime/"
+				try:
+					os.mkdir(df_results_realtime_filepath)
+				except:
+					pass
+			elif run_type == "simulate_realtime":
+				global df_results_simul_realt_filepath
+				df_results_simul_realt_filepath = f"/content/drive/MyDrive/df_results_simul_realt/"
+				try:
+					os.mkdir(df_results_simul_realt_filepath)
+				except:
+					pass
 
 		if run_type == "realtime" or run_type == "simulate_realtime":
 			### PASS TRADE OR NOT, ACCORDING TO CONDITION:
@@ -3135,14 +3143,19 @@ def manage(test_nbr,
 			# print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 			# print("df_results :")
 			# print(df_results, "\n")
-			df_results_realtime_filename = df_results_realtime_filepath + f"df_results_realtime_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
 			df_results_2_save_realtime = df_results.tail(30)
 			df_results_2_save_realtime['frgt_saved_on'] = datetime_2_save_df_res_realtime
 			# print("df_results_2_save_realtime")
 			# print(df_results_2_save_realtime, "\n\n")
-			df_results_2_save_realtime.to_csv(df_results_realtime_filename,
+
+			if run_type == "realtime":
+				df_results_simul_realt_or_realtime_filename = df_results_realtime_filepath + f"df_results_realtime_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
+			elif run_type == "simulate_realtime":
+				df_results_simul_realt_or_realtime_filename = df_results_realtime_filepath + f"df_results_simul_realt_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
+
+			df_results_2_save_realtime.to_csv(df_results_simul_realt_or_realtime_filename,
 											header = not check_file_exists(
-												filepath = df_results_realtime_filename),
+												filepath = df_results_simul_realt_or_realtime_filename),
 											mode = "a",
 											index = False)
 
@@ -3204,7 +3217,7 @@ def manage(test_nbr,
 
 		if runs_realtime+1 == total_runs_realtime:
 			if run_type == "realtime" or run_type == "simulate_realtime":
-				files.download(df_results_realtime_filename)
+				files.download(df_results_simul_realt_or_realtime_filename)
 				print_style(f"\n\tFINISHED: {test_nbr}", color = informative_color)
 	
 	elif not coherence_minutes:
