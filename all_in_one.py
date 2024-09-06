@@ -2068,18 +2068,16 @@ def signal_2_trade(
 			files.download(trades_logs_filename)
 		except FileNotFoundError:
 			print_style(f"File {trades_logs_filename} not found in Google Drive !!!", 
-				color = alert_color, bold = bold)
+				color = "red", bold = True)
 
 		try:
 			files.download(history_node_filename)
 		except FileNotFoundError:
 			print_style(f"File {history_node_filename} not found in Google Drive !!!",
-				color = alert_color, bold = bold)
-
+				color = "red", bold = True)
 
 ###################################
 ########## SECTION MANAGE:
-
 # from statsmodels.tsa.seasonal import seasonal_decompose
 # from sklearn.model_selection import train_test_split
 # from statsmodels.tsa.stattools import adfuller
