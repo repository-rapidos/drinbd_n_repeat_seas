@@ -1329,7 +1329,7 @@ def direct_upload_file(local_file_path_name, cloud_file_path_name):
 									local_file_path_name = local_file_path_name, 
 									cloud_file_path_name = cloud_file_path_name)
 		return url
-	except FileNotFoundError:
+	except:
 		return False
 
 def direct_download_file(cloud_file_path_name, local_file_path_name):
@@ -1858,6 +1858,8 @@ def signal_2_trade(
 	last_data, 
 	runs_realtime, 
 	total_runs_realtime, 
+	idx_test_nbr_n_y_preds,
+	test_nbr_n_y_preds,
 	currency_pair = "EURUSD", 
 	candles_timeframe = 60, 
 	expiration = 1):
@@ -2023,10 +2025,8 @@ def signal_2_trade(
 		# 	print("IDS_3 :", IDS_3, "\n")
 		# except:
 		# 	pass
-
-
 	################
-	if runs_realtime+1 == total_runs_realtime:
+	if (runs_realtime+1 == total_runs_realtime) and idx_test_nbr_n_y_preds+1 == len(test_nbr_n_y_preds):
 		print_style("Please wait for (75 seconds) the last trade to finish before ending of code",
 						color = "cyan")
 		time.sleep(75)
@@ -2034,47 +2034,48 @@ def signal_2_trade(
 		####################################################
 		####################################################
 		####################################################
-		history_node_filepath = f"/content/drive/MyDrive/history_node/"	
-		try:
-			os.mkdir(history_node_filepath)
-		except:
-			pass
-		history_node_filename = history_node_filepath + f"history_node-test_nbr_{test_nbr}-run_id_{run_id}.pkl"
-		############################################################################
-		trades_logs_filepath = f"/content/drive/MyDrive/trades_logs/"
-		try:
-			os.mkdir(trades_logs_filepath)
-		except:
-			pass
-		trades_logs_filename = trades_logs_filepath + f"trades_logs-test_nbr_{test_nbr}-run_id_{run_id}.csv"
-		####################################################
-		####################################################
-		####################################################
-		add_history_node(history_node_filename = history_node_filename, 
-						trades_logs_filename = trades_logs_filename, 
-						digital_instance = digital_instance)
-		# try:
-		# 	loaded_df_trade_logs = pd.read_csv(trades_logs_filename)
-		# 	referal_ids = loaded_df_trade_logs['Trade id'].tolist()
-		# except:
-		# 	referal_ids = []
-		# new_history_node = digital_instance.get_history(nbr_data = 10)['history_node']
-		# history_node_2_add = [d for d in new_history_node if d not in previous_data_history_node and d['raw_event']['order_ids'][0] in referal_ids]
-		# history_node_2_save = previous_data_history_node + history_node_2_add
-		# save_pickle(filepath = history_node_filename, 
-		# 			data = history_node_2_save)
+		for test_nbr, _ in test_nbr_n_y_preds.items():
+			history_node_filepath = f"/content/drive/MyDrive/history_node/"	
+			try:
+				os.mkdir(history_node_filepath)
+			except:
+				pass
+			history_node_filename = history_node_filepath + f"history_node-test_nbr_{test_nbr}-run_id_{run_id}.pkl"
+			############################################################################
+			trades_logs_filepath = f"/content/drive/MyDrive/trades_logs/"
+			try:
+				os.mkdir(trades_logs_filepath)
+			except:
+				pass
+			trades_logs_filename = trades_logs_filepath + f"trades_logs-test_nbr_{test_nbr}-run_id_{run_id}.csv"
+			####################################################
+			####################################################
+			####################################################
+			add_history_node(history_node_filename = history_node_filename, 
+							trades_logs_filename = trades_logs_filename, 
+							digital_instance = digital_instance)
+			# try:
+			# 	loaded_df_trade_logs = pd.read_csv(trades_logs_filename)
+			# 	referal_ids = loaded_df_trade_logs['Trade id'].tolist()
+			# except:
+			# 	referal_ids = []
+			# new_history_node = digital_instance.get_history(nbr_data = 10)['history_node']
+			# history_node_2_add = [d for d in new_history_node if d not in previous_data_history_node and d['raw_event']['order_ids'][0] in referal_ids]
+			# history_node_2_save = previous_data_history_node + history_node_2_add
+			# save_pickle(filepath = history_node_filename, 
+			# 			data = history_node_2_save)
 
-		try:
-			files.download(trades_logs_filename)
-		except FileNotFoundError:
-			print_style(f"File {trades_logs_filename} not found in Google Drive !!!", 
-				color = "red", bold = True)
+			try:
+				files.download(trades_logs_filename)
+			except FileNotFoundError:
+				print_style(f"File {trades_logs_filename} not found in Google Drive !!!", 
+					color = "red", bold = True)
 
-		try:
-			files.download(history_node_filename)
-		except FileNotFoundError:
-			print_style(f"File {history_node_filename} not found in Google Drive !!!",
-				color = "red", bold = True)
+			try:
+				files.download(history_node_filename)
+			except FileNotFoundError:
+				print_style(f"File {history_node_filename} not found in Google Drive !!!",
+					color = "red", bold = True)
 
 ###################################
 ########## SECTION MANAGE:
@@ -2501,6 +2502,7 @@ def manage(test_nbr,
 		trade_fxd_amount_risk_fact,
 		minimal_balance_tradable,
 		verbose_trades_pass,
+		test_nbrs_realtime,
 		wait_right_point_to_trade:bool,
 		runs_realtime = 0,
 		total_runs_realtime = 1_000_000,
@@ -2522,6 +2524,11 @@ def manage(test_nbr,
 
 	if run_type == "realtime":
 		end_df_on_datetime_from = None
+	elif run_type != "realtime":
+		test_nbrs_realtime = None
+
+	if test_nbrs_realtime is not None:
+		assert len(test_nbrs_realtime) <= 3, "len(test_nbrs_realtime) <= 3"
 
 	if run_type == "backtest" or run_type == "fitting":
 		just_run_1 = True
@@ -2989,7 +2996,7 @@ def manage(test_nbr,
 					color = alert_color, bold = bold)
 		print("\n")
 
-	elif run_type != "fitting": ### when it is backtest or realtime
+	elif run_type == "backtest" or run_type == "simulate_realtime":
 		if just_run_1:
 			### WE SHALL FIRST DELETE THE MODEL IF IT IS IN DRIVE, 
 			### IN CASE WHERE IT CAN BE THE MODEL INCOMPLETE FITTED:
@@ -3007,6 +3014,24 @@ def manage(test_nbr,
 				print_style(f"Final model {model_filename} successfully downloaded !!!", color = good_color, bold = bold)
 			elif not result_download_model:
 				print_style(f"Final model {model_filename} not downloaded !!!", color = alert_color, bold = bold)
+
+	elif run_type == "realtime": ### when it is simulate_realtime or realtime
+		if just_run_1:
+			global test_nbr_n_realtime_models
+			test_nbr_n_realtime_models = {}
+			for _test_nbr in test_nbrs_realtime:
+				realtime_model_filename = f'model_test_nbr_{_test_nbr}.h5'
+				if check_file_exists(filepath = gdrive_folder_path + realtime_model_filename):
+					os.remove(gdrive_folder_path + realtime_model_filename)				
+
+				result_download_model = direct_download_file(
+					cloud_file_path_name = results_cloud_path + realtime_model_filename, 
+					local_file_path_name = gdrive_folder_path + realtime_model_filename,
+					)
+
+				realtime_model = load_the_model(gdrive_folder_path = gdrive_folder_path, 
+											test_nbr = _test_nbr)
+				test_nbr_n_realtime_models.update({_test_nbr:realtime_model})
 
 	### FIT THE MODEL:
 	###_______________
@@ -3027,16 +3052,27 @@ def manage(test_nbr,
 
 	### USE MODEL TO MAKE PREDICTIONS:
 	###_______________________________
-	if just_run_1:
-		global model
-		model = load_the_model(gdrive_folder_path = gdrive_folder_path, 
-									test_nbr = test_nbr)
+	if run_type != "realtime":
+		if just_run_1:
+			global model
+			model = load_the_model(gdrive_folder_path = gdrive_folder_path, 
+										test_nbr = test_nbr)
 
-	verbose_model_predict = False
-	if just_run_1:
-		verbose_model_predict = True
+		verbose_model_predict = False
+		if just_run_1:
+			verbose_model_predict = True
 
-	y_pred = model.predict(X_test, verbose = verbose_model_predict)
+		y_pred = model.predict(X_test, verbose = verbose_model_predict)
+		test_nbr_n_y_preds = {test_nbr:y_pred}
+
+	elif run_type == "realtime":
+		test_nbr_n_y_preds = {}
+		for _test_nbr, realtime_model in test_nbr_n_realtime_models.items():
+			realtime_y_pred = realtime_model.predict(X_test, verbose = False)
+			test_nbr_n_y_preds.update({
+					_test_nbr:realtime_y_pred
+				})
+
 	if run_type != "realtime":
 		coherence_minutes = True
 	else:
@@ -3054,183 +3090,186 @@ def manage(test_nbr,
 			coherence_minutes = False
 
 	if coherence_minutes:
-		if just_run_1:
-			df_x_test = pd.DataFrame([item[-1] for item in X_test], columns = data_cols_names)
-			df_scaled_close = df_x_test[[close_column_name]]
-			df_unscaled_close = reference_date_open_close[[close_column_name]]
-			compare_close_sens(df_close_1 = df_scaled_close, 
-							df_close_2 = df_unscaled_close)
+		for idx_test_nbr_n_y_preds, (test_nbr, y_pred) in enumerate(test_nbr_n_y_preds.items()):
+			if just_run_1:
+				df_x_test = pd.DataFrame([item[-1] for item in X_test], columns = data_cols_names)
+				df_scaled_close = df_x_test[[close_column_name]]
+				df_unscaled_close = reference_date_open_close[[close_column_name]]
+				compare_close_sens(df_close_1 = df_scaled_close, 
+								df_close_2 = df_unscaled_close)
 
-		df_x_test = reference_date_open_close[['date_from', 'date_to', 'open', 'close']]
-		df_results_scaled = pd.DataFrame({'y_pred':[item[0] for item in y_pred]})
-		df_results = pd.concat([df_x_test, df_results_scaled], axis = 1)
-		df_results_filename = f"df_results_test_nbr_{test_nbr}.csv"
+			df_x_test = reference_date_open_close[['date_from', 'date_to', 'open', 'close']]
+			df_results_scaled = pd.DataFrame({'y_pred':[item[0] for item in y_pred]})
+			df_results = pd.concat([df_x_test, df_results_scaled], axis = 1)
+			df_results_filename = f"df_results_test_nbr_{test_nbr}.csv"
 
-		if run_type == "backtest" or run_type == "fitting":
-			df_results.to_csv(gdrive_folder_path + df_results_filename, index = False)
-			if run_type == "backtest":
-				files.download(gdrive_folder_path + df_results_filename)
+			if run_type == "backtest" or run_type == "fitting":
+				df_results.to_csv(gdrive_folder_path + df_results_filename, index = False)
+				if run_type == "backtest":
+					files.download(gdrive_folder_path + df_results_filename)
 
-		if just_run_1:
-			if run_type == "realtime":
-				global df_results_realtime_filepath
-				df_results_realtime_filepath = f"/content/drive/MyDrive/df_results_realtime/"
-				try:
-					os.mkdir(df_results_realtime_filepath)
-				except:
-					pass
-			elif run_type == "simulate_realtime":
-				global df_results_simul_realt_filepath
-				df_results_simul_realt_filepath = f"/content/drive/MyDrive/df_results_simul_realt/"
-				try:
-					os.mkdir(df_results_simul_realt_filepath)
-				except:
-					pass
+			if just_run_1:
+				if run_type == "realtime":
+					global df_results_realtime_filepath
+					df_results_realtime_filepath = f"/content/drive/MyDrive/df_results_realtime/"
+					try:
+						os.mkdir(df_results_realtime_filepath)
+					except:
+						pass
+				elif run_type == "simulate_realtime":
+					global df_results_simul_realt_filepath
+					df_results_simul_realt_filepath = f"/content/drive/MyDrive/df_results_simul_realt/"
+					try:
+						os.mkdir(df_results_simul_realt_filepath)
+					except:
+						pass
 
-		if run_type == "realtime" or run_type == "simulate_realtime":
-			### PASS TRADE OR NOT, ACCORDING TO CONDITION:
-			###___________________________________________
-			datetime_2_save_df_res_realtime = datetime.datetime.fromtimestamp(int(time.time()))
-			if pass_trades:
-				### INSTANCIATE THE DIGITAL CLASS:
-				###_______________________________
-				if just_run_1:
-					global digital_instance
-					digital_instance = Digital(account = account)
+			if run_type == "realtime" or run_type == "simulate_realtime":
+				### PASS TRADE OR NOT, ACCORDING TO CONDITION:
+				###___________________________________________
+				datetime_2_save_df_res_realtime = datetime.datetime.fromtimestamp(int(time.time()))
+				if pass_trades:
+					### INSTANCIATE THE DIGITAL CLASS:
+					###_______________________________
+					if just_run_1:
+						global digital_instance
+						digital_instance = Digital(account = account)
 
-				### GET PREDICTION:
-				###________________
-				# #### ____prediction = df_results['y_pred'].tolist()[-2]
-				prediction = df_results['y_pred'].tolist()[-1]
-				
-				### GET SIGNAL FROM PREDICTION:
-				###____________________________
-				signal = get_signal(prediction = prediction, 
-									rappr = rappr_get_signal)
+					### GET PREDICTION:
+					###________________
+					# #### ____prediction = df_results['y_pred'].tolist()[-2]
+					prediction = df_results['y_pred'].tolist()[-1]
+					
+					### GET SIGNAL FROM PREDICTION:
+					###____________________________
+					signal = get_signal(prediction = prediction, 
+										rappr = rappr_get_signal)
 
-				### GET AMOUNT TO TRADE:
+					### GET AMOUNT TO TRADE:
+					###_____________________
+					amount = get_amount_2_trade(account = account, 
+										trade_fxd_amount_risk_fact = trade_fxd_amount_risk_fact)
+
+					### PASS TRADE:
+					###____________
+
+					# if trade_2_first_minutes:
+					# 	cond_signal_2_trade = True
+					# else:
+					# 	if nbr_runs > 1:
+					# 		cond_signal_2_trade = True
+					# 	else:
+					# 		cond_signal_2_trade = False
+
+					cond_signal_2_trade = True
+					if (not trade_2_first_minutes and nbr_runs <= 1) or (datetime.datetime.now().second >= 25):
+						cond_signal_2_trade = False
+
+					# ### if nbr_runs > 1:
+					if cond_signal_2_trade:
+						signal_2_trade(
+							prediction = prediction,
+							the_rappr = rappr_get_signal,
+							signal = signal,
+							test_nbr = test_nbr,
+							digital_instance = digital_instance, 
+							wait_right_point = wait_right_point_to_trade, 
+							amount = amount, 
+							account = account, 
+							minimal_balance_tradable = minimal_balance_tradable, 
+							verbose_trades_pass = verbose_trades_pass, 
+							run_id = run_id,
+							last_data = last_data,
+							runs_realtime = runs_realtime,
+							total_runs_realtime = total_runs_realtime,
+							idx_test_nbr_n_y_preds = idx_test_nbr_n_y_preds,
+							test_nbr_n_y_preds = test_nbr_n_y_preds,
+							# currency_pair = "EURUSD",
+							# candles_timeframe = 60,
+							# expiration = 1
+							)
+
+				### SAVE LAST ROWS OF DF_RESULTS:
+				###______________________________
+				# print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+				# print("df_results :")
+				# print(df_results, "\n")
+				df_results_2_save_realtime = df_results.tail(30)
+				df_results_2_save_realtime['frgt_saved_on'] = datetime_2_save_df_res_realtime
+				# print("df_results_2_save_realtime")
+				# print(df_results_2_save_realtime, "\n\n")
+
+				if run_type == "realtime":
+					df_results_simul_realt_or_realtime_filename = df_results_realtime_filepath + f"df_results_realtime_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
+				elif run_type == "simulate_realtime":
+					df_results_simul_realt_or_realtime_filename = df_results_simul_realt_filepath + f"df_results_simul_realt_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
+
+				df_results_2_save_realtime.to_csv(df_results_simul_realt_or_realtime_filename,
+												header = not check_file_exists(
+													filepath = df_results_simul_realt_or_realtime_filename),
+												mode = "a",
+												index = False)
+
+			### GET BALANCE SHEET:
+			###___________________
+			# if run_type == "fitting":
+			# 	compute_balance_sheet = True
+
+			# if compute_balance_sheet:
+			# 	balance_sheet_filename = f"Balance_sheet_test_nbr_{test_nbr}.pkl"
+			# 	all_results = get_balance_sheet_v2(df_results = df_results,
+			# 					close_column_name = close_column_name,
+			# 					target_shift = target_shift, 
+			# 					y_pred_col_name = 'y_pred', 
+			# 					verbose = verbose_eval, 
+			# 					test_nbr = test_nbr, 
+			# 					df_tail = df_tail_balance_sheet,
+			# 					save_to = gdrive_folder_path + balance_sheet_filename)
+
+			if run_type == "fitting":
+				### UPLOAD RESULT FILES:
 				###_____________________
-				amount = get_amount_2_trade(account = account, 
-									trade_fxd_amount_risk_fact = trade_fxd_amount_risk_fact)
+				result_filenames = [
+					# balance_sheet_filename,
+					df_results_filename,
+					f'prev_epochs_test_nbr_{test_nbr}.txt',
+					f'model_test_nbr_{test_nbr}.h5',
+					f'history_test_nbr_{test_nbr}.pkl',
+					f'log_fitting_test_nbr_{test_nbr}.txt',
+				]
 
-				### PASS TRADE:
-				###____________
-
-				# if trade_2_first_minutes:
-				# 	cond_signal_2_trade = True
-				# else:
-				# 	if nbr_runs > 1:
-				# 		cond_signal_2_trade = True
-				# 	else:
-				# 		cond_signal_2_trade = False
-
-				cond_signal_2_trade = True
-				if (not trade_2_first_minutes and nbr_runs <= 1) or (datetime.datetime.now().second >= 25):
-					cond_signal_2_trade = False
-
-				# ### if nbr_runs > 1:
-				if cond_signal_2_trade:
-					signal_2_trade(
-						prediction = prediction,
-						the_rappr = rappr_get_signal,
-						signal = signal,
-						test_nbr = test_nbr,
-						digital_instance = digital_instance, 
-						wait_right_point = wait_right_point_to_trade, 
-						amount = amount, 
-						account = account, 
-						minimal_balance_tradable = minimal_balance_tradable, 
-						verbose_trades_pass = verbose_trades_pass, 
-						run_id = run_id,
-						last_data = last_data,
-						runs_realtime = runs_realtime,
-						total_runs_realtime = total_runs_realtime,
-						# currency_pair = "EURUSD",
-						# candles_timeframe = 60,
-						# expiration = 1
+				print("\n")
+				# all_urls = []
+				for result_filename in result_filenames:
+					result_upload = direct_upload_file(
+						local_file_path_name = gdrive_folder_path + result_filename, 
+						cloud_file_path_name = results_cloud_path + result_filename,
 						)
 
-			### SAVE LAST ROWS OF DF_RESULTS:
-			###______________________________
-			# print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-			# print("df_results :")
-			# print(df_results, "\n")
-			df_results_2_save_realtime = df_results.tail(30)
-			df_results_2_save_realtime['frgt_saved_on'] = datetime_2_save_df_res_realtime
-			# print("df_results_2_save_realtime")
-			# print(df_results_2_save_realtime, "\n\n")
+					# all_urls.append(result_upload)
+					if result_upload:
+						print_style(f"Successfully upload result file: {result_filename}:\n\t{result_upload}",
+							color = good_color, bold = bold)
+					else:
+						print_style(f"\nResult file {result_filename} wasn't uploaded !!!\n",
+							color = alert_color, bold = bold)
+				print("\n")
 
-			if run_type == "realtime":
-				df_results_simul_realt_or_realtime_filename = df_results_realtime_filepath + f"df_results_realtime_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
-			elif run_type == "simulate_realtime":
-				df_results_simul_realt_or_realtime_filename = df_results_simul_realt_filepath + f"df_results_simul_realt_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
+				# all_urls_filename = gdrive_folder_path + test_nbr + ".txt"
+				# with open(all_urls_filename, "a", encoding = "utf-8") as f:
+				# 	for url_ in all_urls:
+				# 		f.write(f"{url_}\n")
+				# files.download(all_urls_filename)
 
-			df_results_2_save_realtime.to_csv(df_results_simul_realt_or_realtime_filename,
-											header = not check_file_exists(
-												filepath = df_results_simul_realt_or_realtime_filename),
-											mode = "a",
-											index = False)
+			if run_type != "realtime" and run_type != "simulate_realtime":
+				### SIGNAL THE ENDING OF CODE:
+				###___________________________
+				print_style(f"\n\tFinished: {test_nbr}", color = good_color, bold = bold)
 
-		### GET BALANCE SHEET:
-		###___________________
-		# if run_type == "fitting":
-		# 	compute_balance_sheet = True
-
-		# if compute_balance_sheet:
-		# 	balance_sheet_filename = f"Balance_sheet_test_nbr_{test_nbr}.pkl"
-		# 	all_results = get_balance_sheet_v2(df_results = df_results,
-		# 					close_column_name = close_column_name,
-		# 					target_shift = target_shift, 
-		# 					y_pred_col_name = 'y_pred', 
-		# 					verbose = verbose_eval, 
-		# 					test_nbr = test_nbr, 
-		# 					df_tail = df_tail_balance_sheet,
-		# 					save_to = gdrive_folder_path + balance_sheet_filename)
-
-		if run_type == "fitting":
-			### UPLOAD RESULT FILES:
-			###_____________________
-			result_filenames = [
-				# balance_sheet_filename,
-				df_results_filename,
-				f'prev_epochs_test_nbr_{test_nbr}.txt',
-				f'model_test_nbr_{test_nbr}.h5',
-				f'history_test_nbr_{test_nbr}.pkl',
-				f'log_fitting_test_nbr_{test_nbr}.txt',
-			]
-
-			print("\n")
-			# all_urls = []
-			for result_filename in result_filenames:
-				result_upload = direct_upload_file(
-					local_file_path_name = gdrive_folder_path + result_filename, 
-					cloud_file_path_name = results_cloud_path + result_filename,
-					)
-
-				# all_urls.append(result_upload)
-				if result_upload:
-					print_style(f"Successfully upload result file: {result_filename}:\n\t{result_upload}",
-						color = good_color, bold = bold)
-				else:
-					print_style(f"\nResult file {result_filename} wasn't uploaded !!!\n",
-						color = alert_color, bold = bold)
-			print("\n")
-
-			# all_urls_filename = gdrive_folder_path + test_nbr + ".txt"
-			# with open(all_urls_filename, "a", encoding = "utf-8") as f:
-			# 	for url_ in all_urls:
-			# 		f.write(f"{url_}\n")
-			# files.download(all_urls_filename)
-
-		if run_type != "realtime" and run_type != "simulate_realtime":
-			### SIGNAL THE ENDING OF CODE:
-			###___________________________
-			print_style(f"\n\tFinished: {test_nbr}", color = good_color, bold = bold)
-
-		if runs_realtime+1 == total_runs_realtime:
-			if run_type == "realtime" or run_type == "simulate_realtime":
-				files.download(df_results_simul_realt_or_realtime_filename)
-				print_style(f"\n\tFINISHED: {test_nbr}", color = informative_color)
+			if runs_realtime+1 == total_runs_realtime:
+				if run_type == "realtime" or run_type == "simulate_realtime":
+					files.download(df_results_simul_realt_or_realtime_filename)
+					print_style(f"\n\tFINISHED: {test_nbr}", color = informative_color)
 	
 	elif not coherence_minutes:
 		print("\n")
