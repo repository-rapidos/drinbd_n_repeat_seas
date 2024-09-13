@@ -3203,6 +3203,7 @@ def manage(test_nbr,
 					df_results_simul_realt_or_realtime_filename = df_results_realtime_filepath + f"df_results_realtime_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
 				elif run_type == "simulate_realtime":
 					df_results_simul_realt_or_realtime_filename = df_results_simul_realt_filepath + f"df_results_simul_realt_model_test_nbr_{test_nbr}_run_id_{run_id}.csv"
+					print(f"File to download on ending of simulate realtime:\n\t{df_results_simul_realt_or_realtime_filename}")
 
 				df_results_2_save_realtime.to_csv(df_results_simul_realt_or_realtime_filename,
 												header = not check_file_exists(
