@@ -1852,6 +1852,7 @@ def signal_2_trade(
 	digital_instance, 
 	amount, 
 	account, 
+	test_nbrs_realtime,
 	minimal_balance_tradable, 
 	verbose_trades_pass, 
 	run_id, 
@@ -1864,8 +1865,7 @@ def signal_2_trade(
 	candles_timeframe = 60, 
 	expiration = 1):
 	
-
-	def add_history_node(history_node_filename, trades_logs_filename, digital_instance):
+	def add_history_node(history_node_filename, test_nbrs_realtime, trades_logs_filename, digital_instance):
 		try:
 			previous_data_history_node = load_pickle(
 											filepath = history_node_filename)
@@ -1878,7 +1878,11 @@ def signal_2_trade(
 		except:
 			referal_ids = []
 		#################
-		new_history_node = digital_instance.get_history(nbr_data = 10)['history_node']
+		multi_nbr_data = 1
+		if test_nbrs_realtime is not None:
+			multi_nbr_data = len(test_nbrs_realtime)
+		nbr_data = multi_nbr_data*10
+		new_history_node = digital_instance.get_history(nbr_data = nbr_data)['history_node']
 		history_node_2_add = [d for d in new_history_node if d not in previous_data_history_node and d['raw_event']['order_ids'][0] in referal_ids]
 		history_node_2_save = previous_data_history_node + history_node_2_add
 		save_pickle(filepath = history_node_filename, 
@@ -1988,6 +1992,7 @@ def signal_2_trade(
 		history_node_filename = history_node_filepath + f"history_node-test_nbr_{test_nbr}-run_id_{run_id}.pkl"
 		add_history_node(history_node_filename = history_node_filename, 
 						trades_logs_filename = trades_logs_filename, 
+						test_nbrs_realtime = test_nbrs_realtime,
 						digital_instance = digital_instance)
 
 		# try:
@@ -2053,6 +2058,7 @@ def signal_2_trade(
 			####################################################
 			add_history_node(history_node_filename = history_node_filename, 
 							trades_logs_filename = trades_logs_filename, 
+							test_nbrs_realtime = test_nbrs_realtime,
 							digital_instance = digital_instance)
 			# try:
 			# 	loaded_df_trade_logs = pd.read_csv(trades_logs_filename)
@@ -3176,6 +3182,7 @@ def manage(test_nbr,
 							wait_right_point = wait_right_point_to_trade, 
 							amount = amount, 
 							account = account, 
+							test_nbrs_realtime = test_nbrs_realtime,
 							minimal_balance_tradable = minimal_balance_tradable, 
 							verbose_trades_pass = verbose_trades_pass, 
 							run_id = run_id,
